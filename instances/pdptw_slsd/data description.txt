@@ -1,0 +1,17 @@
+[Vehicles]
+id  capacity depot
+
+[Requests]
+id demand
+
+[Fixed lines]
+origin_node  destination_node departure_1 departure_2 ...|
+
+[Nodes]
+id start_tw end_tw service_time
+
+[Positions]
+x_coordinate y_coordinate
+
+[Demands]
+a b c (discrete triangle distribution)

@@ -1,0 +1,12 @@
+Objective function value: 535.2739334025542
+
+Vehicle 4: 1 (0.0)    9 (23.0)    8 (163.0)    3 (238.11)    4 (264.43)    11 (272.71)    17 (333.0)    16 (380.88)    12 (464.5)    1 (600.0)    
+Vehicle 3: 1 (0.0)    37 (419.61)    13 (465.33)    1 (600.0)    
+Vehicle 2: 0 (0.0)    7 (20.0)    15 (32.22)    6 (199.0)    14 (235.0)    0 (600.0)    
+Vehicle 1: 0 (0.0)    5 (31.0)    2 (94.0)    29 (167.01)    10 (441.0)    0 (600.0)    
+
+Scheduled lines' departures:
+
+Request 5 from transfer node 19(29) to 20(37) at time 270 travel time 148.61
+
+#Let transfer node X(x), where X is the physical transfer node and x is its replication related to request y. Routing considers replicated transfer nodes only, and not physical ones.

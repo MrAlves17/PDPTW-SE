@@ -1,0 +1,14 @@
+[Vehicles] // Information relevant for the PD vehicles
+ID 	Capacity Depot_ID
+
+[Requests] // Data related to the requests
+ID 	Demand_Quantity
+
+[Fixed Lines] // Information related to the scheduled lines
+ID_Oirign	 ID_Destination	 	Departure_Time_1	Departure_Time_2, etc. |
+
+[Nodes] // Data related to the nodes
+ID 	StartTW 	EndTW 	ServiceTime
+
+[Positions] // The coordinates of each node
+X 	Y
