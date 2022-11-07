@@ -8,25 +8,25 @@ GXXFLAGS :=
 TARGET := PDPTWSE.out
 
 # header files
-INCLUDES := -I src/include
+INCLUDES := -I src/brkga/include
 
 # source files
-SOURCES := src/lib/idata.cpp
+SOURCES := src/brkga/lib/idata.cpp
 
 # object files
-# src/lib/ -> build/
-OBJECTS := $(patsubst src/lib/%,build/%,$(SOURCES))
+# src/brkga/lib/ -> build/
+OBJECTS := $(patsubst src/brkga/lib/%,build/%,$(SOURCES))
 # .cpp -> .o
 OBJECTS := $(patsubst %.cpp,%.o,$(OBJECTS))
 
 all: $(TARGET)
 
-$(TARGET): src/PDPTWSE.cpp $(OBJECTS) src/include/
-	$(GXX) $(GXXFLAGS) $(INCLUDES) src/PDPTWSE.cpp -o $@ $(OBJECTS)
+$(TARGET): src/brkga/PDPTWSE.cpp $(OBJECTS) src/brkga/include/
+	$(GXX) $(GXXFLAGS) $(INCLUDES) src/brkga/PDPTWSE.cpp -o $@ $(OBJECTS)
 
-build/idata.o: src/lib/idata.cpp
+build/idata.o: src/brkga/lib/idata.cpp
 	mkdir -p $(dir $@)
-	$(GXX) $(GXXFLAGS) $(INCLUDES) -c src/lib/idata.cpp -o $@
+	$(GXX) $(GXXFLAGS) $(INCLUDES) -c src/brkga/lib/idata.cpp -o $@
 
 clean:
 	$(RM) -r build
