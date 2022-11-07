@@ -1,6 +1,9 @@
 #ifndef customer_class
 #define customer_class
 
+#include <string>
+#include <vector>
+
 class CUSTOMER{
 	public:
 	int id, demand, z;
@@ -31,6 +34,19 @@ class CUSTOMER{
 		servtime = servtime_;
 		p_id = p_id_;
 		d_id = d_id_;
+	}
+
+	CUSTOMER(std::vector<std::string> customer){
+		id = std::stold(customer[0]);
+		x = std::stold(customer[1]);
+		y = std::stold(customer[2]);
+		z = std::stold(customer[3]);
+		demand = std::stold(customer[4]);
+		earliest = std::stold(customer[5]);
+		latest = std::stold(customer[6]);
+		servtime = std::stold(customer[7]);
+		p_id = std::stold(customer[8]);
+		d_id = std::stold(customer[9]);
 	}
 
 	bool operator <(const CUSTOMER& rhs) {

@@ -7,7 +7,7 @@
 
 class PARAMETERS{
 	public:
-	char* filename;
+	char* instdir;
 
 	PARAMETERS(){
 

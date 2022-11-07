@@ -24,6 +24,15 @@ class MACHINE{
 		speed = speed_;
 	}
 
+	MACHINE(std::vector<std::string> machine){
+		id = std::stold(machine[0]);
+		lz = std::stold(machine[1]);
+		hz = std::stold(machine[2]);
+		x = std::stold(machine[3]);
+		y = std::stold(machine[4]);
+		speed = std::stold(machine[5]);
+	}
+
 	bool operator <(const MACHINE& rhs) {
 		return speed < rhs.speed;
 	}

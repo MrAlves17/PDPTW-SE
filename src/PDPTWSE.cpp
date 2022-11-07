@@ -7,7 +7,7 @@ void show_help(const char *name) {
 	fprintf(stderr, "\
 usage: %s <parameters>\n\
 	-h,     --help                      show help.\n\
-	-f,  	--filename <string>			set filename.\n", name);
+	-d,  	--instdir <string>			set instance directory.\n", name);
 	exit(-1);
 }
 
@@ -19,7 +19,7 @@ void read_args(const int argc, char* argv[], PARAMETERS& param) {
 	*/
 	const option options[] = {
 		{"help"                 , no_argument       , 0 , 'h' },
-		{"filename"				, required_argument , 0 , 'f' },
+		{"instdir"				, required_argument , 0 , 'd' },
 		{0                      , 0                 , 0 ,  0  },
 	};
 
@@ -27,13 +27,13 @@ void read_args(const int argc, char* argv[], PARAMETERS& param) {
 		show_help(argv[0]);
 	}
 
-	while( (opt = getopt_long(argc, argv, "hf:", options, NULL)) > 0 ) {
+	while( (opt = getopt_long(argc, argv, "hd:", options, NULL)) > 0 ) {
 		switch ( opt ) {
 			case 'h': /* -h ou --help */
 				show_help(argv[0]);
 				break;
-			case 'f': /* -f ou --filename */
-				param.filename = optarg;
+			case 'd': /* -d ou --instdir */
+				param.instdir = optarg;
 				break;
 			default:
 				fprintf(stderr, "Opcao invalida ou faltando argumento: `%c'\n", optopt);
@@ -52,7 +52,6 @@ int32_t main(int argc, char *argv[]){
 	IDATA idata;
 
 	read_args(argc, argv, param);
-
 	idata.read_input(param);
 
 	idata.print_input();

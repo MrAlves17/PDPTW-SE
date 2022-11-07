@@ -13,6 +13,7 @@
 #include <algorithm>
 #include <vector>
 #include <set>
+#include <string>
 
 class IDATA{
 	public:
@@ -25,6 +26,7 @@ class IDATA{
 	std::vector<MACHINE> machines;	
 	std::vector< std::vector<long double> > distance;
 
+	void read_csv(std::string, std::string);
 	void read_input(PARAMETERS& param);
 	static std::vector<int> ids_by_closest_to_depot(const IDATA&);
 	static std::vector<int> ids_by_latest_deadline(const IDATA&);

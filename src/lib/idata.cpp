@@ -1,16 +1,12 @@
 #include "idata.hpp"
-std::string extract_inst_name(std::string filename){
-	int j = filename.size()-1;
-	while(filename[j] != '.'){
-		j--;
-	}
-	j--;
+std::string extract_inst_name(std::string instdir){
+	int j = instdir.size()-2;
 	int i = j;	
-	while(filename[i] != '/'){
+	while(instdir[i] != '/'){
 		i--;
 	}
 	i++;
-	return filename.substr(i,j-i+1);
+	return instdir.substr(i,j-i+1);
 }
 
 void IDATA::CalculateDistances() {
@@ -23,75 +19,57 @@ void IDATA::CalculateDistances() {
 	}
 }
 
-void IDATA::read_input(PARAMETERS& param) {
+std::vector<std::string> split(std::string line){
+	std::string delimiter = ",";
+	std::vector<std::string> words;
+
+	size_t pos;
+	while ((pos = line.find(delimiter)) != std::string::npos) {
+		words.push_back(line.substr(0, pos));
+		line.erase(0, pos + delimiter.length());
+	}
+	words.push_back(line);
+
+	return words;
+}
+
+void IDATA::read_csv(std::string instdir, std::string name){
 	std::ifstream file;
-	file.open(param.filename);
+	file.open(instdir+name+".csv");
 	if (!file) exit(1);
 
-	this->instance_name = extract_inst_name(param.filename);
-
-	std::string expletive;
-	file >> expletive;
-	assert(expletive == "VEHICLES");
-	
-	int qtt_vehicles;
-	file >> qtt_vehicles;
-
-	for(int i=0; i<3; i++){
-		file >> expletive;
+	std::string line;
+	while(std::getline(file, line)){
+		std::vector<std::string> words = split(line);
+		if(name == "vehicles"){
+			VEHICLE vehicle(words);
+			this->vehicles.push_back(vehicle);
+		}else if(name == "tasks"){
+			CUSTOMER customer(words);
+			this->customers.push_back(customer);
+		}else if(name == "machines"){
+			MACHINE machine(words);
+			this->machines.push_back(machine);
+		}else{
+			exit(-1);
+		}
 	}
+	file.close();
+}
 
-	assert(expletive == "CAPACITY");
-	int id_v, cap;
-	for(int i=0; i<qtt_vehicles; i++){
-		file >> id_v >> cap;
-		VEHICLE vehicle(id_v, cap);
-		this->vehicles.push_back(vehicle);
-	}
+void IDATA::read_input(PARAMETERS& param) {
 
-	file >> expletive;
-	assert(expletive == "TASKS");
-	
-	int qtt_tasks;
-	file >> qtt_tasks;
-	for(int i=0; i<11; i++){
-		file >> expletive;
-	}
-	assert(expletive == "DID");
+	this->instance_name = extract_inst_name(param.instdir);
 
-	int id_c, dem, p_id, d_id;
-	long double x, y, z, earliest, latest, servtime;
-	for(int i=0; i<qtt_tasks; i++){
-		file >> id_c >> x >> y >> z >> dem >> earliest >> latest >> servtime >> p_id >> d_id;
-		CUSTOMER cust(id_c, x, y, z, dem, earliest, latest, servtime, p_id, d_id);
-		this->customers.push_back(cust);
-	}
-
-	file >> expletive;
-	assert(expletive == "MACHINES");
-	
-	int qtt_machines;
-	file >> qtt_machines;
-	for(int i=0; i<7; i++){
-		file >> expletive;
-	}
-
-	assert(expletive == "SPEED");
-
-	int id_m;
-	long double lz, hz, speed;
-	for(int i=0; i<qtt_machines; i++){
-		file >> id_m >> lz >> hz >> x >> y >> speed;
-		MACHINE mach(id_m, lz, hz, x, y, speed);
-		this->machines.push_back(mach);
-	}
+	read_csv(param.instdir, "vehicles");
+	read_csv(param.instdir, "tasks");
+	read_csv(param.instdir, "machines");
 
 	this->qtt_vehicles = this->vehicles.size();
 	this->qtt_customers = this->customers.size();
 	this->qtt_machines = this->machines.size();
 
 	this->CalculateDistances();
-	file.close();
 }
 
 
