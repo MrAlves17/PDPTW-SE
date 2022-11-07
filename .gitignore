@@ -34,3 +34,4 @@
 *.zip
 *.xcf
 build/
+visualizer/p5.js

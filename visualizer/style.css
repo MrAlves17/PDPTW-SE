@@ -1,0 +1,15 @@
+* {
+	box-sizing: border-box;
+	margin: 0;
+	padding: 0;
+	text-align: center;
+	font-family: Arial;
+	display: flex;
+	flex-flow: column wrap;
+	align-items: center;
+	justify-content: center;
+}
+
+title {
+	display: none;
+}
