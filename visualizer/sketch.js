@@ -268,7 +268,7 @@ function plotCustomers(){
 			strokeWeight(5);
 		}
 		if(observedCustomer < 0 || customers[i].z == customers[observedCustomer].z){
-			stroke((360-360/zlimit)/zlimit*customers[i].z + 360/zlimit, 100, 50)
+			stroke((320-360/zlimit)/zlimit*customers[i].z + 360/zlimit, 100, 50)
 		}else{
 			stroke(0,0,0,0)
 		}
