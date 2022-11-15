@@ -5,8 +5,8 @@ using Pkg
 # Pkg.instantiate()
 # Pkg.build()
 
-# using JuMP
-# using Gurobi
+using JuMP
+using Gurobi
 
 import Data
 import Parameters
@@ -18,6 +18,6 @@ params = Parameters.readInputParameters(ARGS)
 # Read instance data
 inst = Data.readData(params.instName)
 
-# if params.form == "melo"
-# 	Formulations.meloFormulation(inst, params)
-# end
+if params.form == "melo"
+	Formulations.meloFormulation(inst, params)
+end

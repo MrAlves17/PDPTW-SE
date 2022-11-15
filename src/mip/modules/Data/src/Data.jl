@@ -22,6 +22,8 @@ struct InstanceData
 	H_e
 	d_bar
 	O
+	n
+	s
 end
 
 struct Vehicle
@@ -177,13 +179,15 @@ function readData(instanceFile)
 	# println(Q)
 
 	d = Any[]
-	for k in K
+	for i in Vprime
 		push!(d,Any[])
-		for i in Vprime
-			push!(d[k], Any[])
-			for j in Vprime
+		for j in Vprime
+			push!(d[i], Any[])
+			for k in K
 				if i != j
-					push!(d[k][i], euclidean_dist(tasks[refs[i]], tasks[refs[j]]))
+					push!(d[i][j], euclidean_dist(tasks[refs[i]], tasks[refs[j]]))
+				else
+					push!(d[i][j], ∞)
 				end
 			end
 		end
@@ -223,15 +227,15 @@ function readData(instanceFile)
 
 	# symmetrical 
 	d_bar = Any[] 
-	for k in K
+	for i in Vprime
 		push!(d_bar,Any[])
-		for i in Vprime
-			push!(d_bar[k], Any[])
-			for h in H
+		for h in H
+			push!(d_bar[i], Any[])
+			for k in K
 				if tasks[refs[i]].z >= machines[h].lz && tasks[refs[i]].z <= machines[h].hz
-					push!(d_bar[k][i], euclidean_dist(tasks[refs[i]], machines[h]))
+					push!(d_bar[i][h], euclidean_dist(tasks[refs[i]], machines[h]))
 				else
-					push!(d_bar[k][i], ∞)
+					push!(d_bar[i][h], ∞)
 				end
 			end
 		end
@@ -252,9 +256,12 @@ function readData(instanceFile)
 		end
 	end
 
+	s = Any[]
+	for i in Vprime
+		push!(s, tasks[refs[i]].servt)
+	end
 
-	inst = InstanceData(vehicles, tasks, machines, refs, V, V_p, V_d, Vprime, q, K, Q, d, A, A_m, A_s, H, H_e, d_bar, O)
-	
+	inst = InstanceData(vehicles, tasks, machines, refs, V, V_p, V_d, Vprime, q, K, Q, d, A, A_m, A_s, H, H_e, d_bar, O, n, s)
 	return inst
 end # function readData()
 
