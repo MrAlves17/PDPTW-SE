@@ -3,6 +3,7 @@ module Parameters
 struct ParameterData
 	instName::String
 	form::String
+	cutoff::Int
 	balanced::Int
 	solver::String
 	maxtime::Int
@@ -47,6 +48,7 @@ function readInputParameters(ARGS)
 	tolsep = 10.0
 	cpmaxrounds = 1000
 	maxnodes = 10000.0
+	cutoff = 0
 
 	### Read the parameters and set correct values whenever provided ###
 	for param in 1:length(ARGS)
@@ -82,6 +84,9 @@ function readInputParameters(ARGS)
 			param += 1
 		elseif ARGS[param] == "--form"
 			form = ARGS[param+1]
+			param += 1
+		elseif ARGS[param] == "--cutoff"
+			cutoff = parse(Int,ARGS[param+1])
 			param += 1
 		elseif ARGS[param] == "--dpseed"
 			dpseed = parse(Int,ARGS[param+1])
@@ -161,7 +166,7 @@ function readInputParameters(ARGS)
 		end
 	end
 
-	params = ParameterData(instName, form, balanced, solver, maxtime, tolgap, printsol, capacity, capacityw, capacityr, disablesolver, dpseed, dpalpha, dptype, dpmaxiter, dpmaxtime, tolsep, cpmaxrounds, maxnodes)
+	params = ParameterData(instName, form, cutoff, balanced, solver, maxtime, tolgap, printsol, capacity, capacityw, capacityr, disablesolver, dpseed, dpalpha, dptype, dpmaxiter, dpmaxtime, tolsep, cpmaxrounds, maxnodes)
 
 	return params
 

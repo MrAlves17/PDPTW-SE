@@ -16,7 +16,7 @@ import Formulations
 params = Parameters.readInputParameters(ARGS)
 
 # Read instance data
-inst = Data.readData(params.instName)
+inst = Data.readData(params.instName, params)
 
 if params.form == "melo"
 	Formulations.meloFormulation(inst, params)

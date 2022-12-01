@@ -62,7 +62,7 @@ function euclidean_dist(t1::Task, t2)
 	return sqrt((t1.x - t2.x)^2 + (t1.y - t2.y)^2)
 end # function euclidean_dist
 
-function readData(instanceFile)
+function readData(instanceFile, params)
 
 	println("Running Data.readData with file $(instanceFile)")
 	vehicles = instanceFile * "vehicles.csv"
@@ -108,41 +108,45 @@ function readData(instanceFile)
 		if cust.dem > 0
 			push!(refs, cust.id+1)
 		end
+		if length(refs) == params.cutoff+1
+			break
+		end
 	end
 	n = length(refs)-1
 	for pid in refs[2:n+1]
 		push!(refs, tasks[pid].did+1)
 	end
 	push!(refs, 1)
+	println(refs)
 	# println(refs)
 
 	V = Any[]
-	for i in 1:length(tasks)
+	for i in 1:2*n+1
 		push!(V, i)
 	end
-	# println(V)
+	println(V)
 
 	V_p = Any[]
 	for i in 2:length(refs[2:n+1])+1
 		push!(V_p, i)
 	end
-	# println(V_p)
+	println(V_p)
 
 	V_d = Any[]
 	for i in 2:length(refs[n+2:length(refs)])
 		push!(V_d, i+length(refs[2:n+1]))
 	end
-	# println(V_d)
+	println(V_d)
 
 	Vprime = copy(V)
 	push!(Vprime, length(V)+1)
 
-	# println(Vprime)
+	println(Vprime)
 
 	A = Any[]
 	for i in V[2:length(V)]
 		for j in V[2:length(V)]
-			if i != j
+			if i != j # add to article
 				push!(A, (i,j))
 			end
 		end
@@ -226,6 +230,7 @@ function readData(instanceFile)
 	end
 
 	# symmetrical 
+	infty = 99999999
 	d_bar = Any[] 
 	for i in Vprime
 		push!(d_bar,Any[])
@@ -235,7 +240,7 @@ function readData(instanceFile)
 				if tasks[refs[i]].z >= machines[h].lz && tasks[refs[i]].z <= machines[h].hz
 					push!(d_bar[i][h], euclidean_dist(tasks[refs[i]], machines[h]))
 				else
-					push!(d_bar[i][h], ∞)
+					push!(d_bar[i][h], infty)
 				end
 			end
 		end
@@ -250,7 +255,7 @@ function readData(instanceFile)
 				if (i,j) in A_m && h in H_e[(i,j)]
 					push!(O[i][j], abs(tasks[refs[i]].z - tasks[refs[j]].z)/machines[h].spd) 
 				else
-					push!(O[i][j], ∞)
+					push!(O[i][j], infty)
 				end
 			end
 		end
@@ -262,6 +267,9 @@ function readData(instanceFile)
 	end
 
 	inst = InstanceData(vehicles, tasks, machines, refs, V, V_p, V_d, Vprime, q, K, Q, d, A, A_m, A_s, H, H_e, d_bar, O, n, s)
+	for i in inst.refs
+		println(inst.tasks[i])
+	end
 	return inst
 end # function readData()
 
