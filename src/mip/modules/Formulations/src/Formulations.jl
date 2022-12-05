@@ -205,41 +205,41 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 		end
 	end
 
-	# c19
-	for h in inst.H
-		for (i,j) in inst.A_m
-			for (iprime, jprime) in inst.A_m
-				@constraint(model, gamma[i,j,iprime,jprime,h] + gamma[iprime,jprime,i,j,h] >= phi[i,j,h] + phi[iprime, jprime, h] - 1, base_name = "c19")
-			end
-		end
-	end
+	# # c19
+	# for h in inst.H
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime, jprime) in inst.A_m
+	# 			@constraint(model, gamma[i,j,iprime,jprime,h] + gamma[iprime,jprime,i,j,h] >= phi[i,j,h] + phi[iprime, jprime, h] - 1, base_name = "c19")
+	# 		end
+	# 	end
+	# end
 
-	# c20
-	for h in inst.H
-		for (i,j) in inst.A_m
-			for (iprime, jprime) in inst.A_m
-				@constraint(model, gamma[i,j,iprime,jprime,h] <= phi[i,j,h], base_name = "c20")
-			end
-		end
-	end
+	# # c20
+	# for h in inst.H
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime, jprime) in inst.A_m
+	# 			@constraint(model, gamma[i,j,iprime,jprime,h] <= phi[i,j,h], base_name = "c20")
+	# 		end
+	# 	end
+	# end
 
-	# c21
-	for h in inst.H
-		for (i,j) in inst.A_m
-			for (iprime, jprime) in inst.A_m
-				@constraint(model, gamma[iprime,jprime,i,j,h] <= phi[i,j,h], base_name = "c21")
-			end
-		end
-	end
+	# # c21
+	# for h in inst.H
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime, jprime) in inst.A_m
+	# 			@constraint(model, gamma[iprime,jprime,i,j,h] <= phi[i,j,h], base_name = "c21")
+	# 		end
+	# 	end
+	# end
 
-	# c22
-	for h in inst.H
-		for (i,j) in inst.A_m
-			for (iprime, jprime) in inst.A_m
-				@constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[i][j][h] + inst.O[j][iprime][h] - M*(1-gamma[i,j,iprime,jprime,h]), base_name = "c22")
-			end
-		end
-	end
+	# # c22
+	# for h in inst.H
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime, jprime) in inst.A_m
+	# 			@constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[i][j][h] + inst.O[j][iprime][h] - M*(1-gamma[i,j,iprime,jprime,h]), base_name = "c22")
+	# 		end
+	# 	end
+	# end
 
 	# c23
 	for k in inst.K
@@ -276,13 +276,13 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	t2 = time_ns()
 	elapsedtime = (t2-t1)/1.0e9
 
+	println(status)
 	bestsol = sum(value.(C))
 	bestbound = objective_bound(model)
 	# numnodes = node_count(model)
 	time = solve_time(model)
 	gap = 100*(bestsol-bestbound)/bestsol
 
-        #println(status)
 	opt = 0
 	if status == :Optimal
 		opt = 1
@@ -304,9 +304,9 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	sol = createSolutionMelo(inst,x,z,t,C,phi,gamma,alpha)
 	printMeloFormulationSolution(inst,sol)
 
-	# if validateSolution(inst, sol)
-	# 	println("Everything is awesome!")
-	# end
+	if validateSolution(inst, sol)
+		println("Everything is awesome!")
+	end
 
 end #function meloFormulation()
 
@@ -496,11 +496,17 @@ end # function createSolutionMelo()
 
 function printMeloFormulationSolution(inst::InstanceData, sol::Solution)
 	for k in inst.K
+		print(k,' ')
 		for i in 1:length(sol.routes[k])
-			print(instsol.routes[k][i], '(', sol.times[k][i], ')', " --> ")
+			print(sol.routes[k][i], '(', sol.times[k][i], ')', " --> ")
 		end
 		println()
 	end
 
 end # function printMeloFormulationSolution
+
+function validateSolution(inst::InstanceData, sol::Solution)
+	
+	
+	return true
 end # module

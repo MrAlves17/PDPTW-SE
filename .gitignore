@@ -35,3 +35,4 @@
 *.xcf
 build/
 visualizer/p5.js
+*modelo.lp
