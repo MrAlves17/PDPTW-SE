@@ -9,7 +9,8 @@ using Infinity
 
 struct Solution
 	routes
-	times
+	timesk
+	timesh
 end
 
 export meloFormulation
@@ -311,202 +312,257 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 end #function meloFormulation()
 
 function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
-	M = 999999
+	
+	# Testing constraints
+		M = 999999
+		# c1
+		# for k in inst.K
+		# 	sumX = 0
+		# 	get_j = 0
+		# 	for j in inst.V_p
+		# 		sumX += x[1,j,k]
+		# 		if x[1,j,k] == 1
+		# 			get_j = j
+		# 		end
+		# 	end
+		# 	sumX += x[1,2*inst.n+2,k]
+		# 	if x[1,2*inst.n+2,k] == 1
+		# 		get_j = 2*inst.n+2
+		# 	end
+		# 	# println(k)
+		# 	println(sumX == 1)
+		# 	println(1,' ',get_j,' ',k)
+		# 	println(x[1,get_j,k])
+		# 	# @constraint(model, sumX == 1, base_name = "c1")
+		# end
+		# println()
+		# # c2
+		# for k in inst.K
+		# 	for i in inst.V[2:length(inst.V)]
+		# 		sum1 = 0
+		# 		get_j = 0
+		# 		for (j,p) in inst.A
+		# 			if p == i
+		# 				sum1 += x[j,i,k]
+		# 				if x[j,i,k] == 1
+		# 					get_j = j
+		# 				end
+		# 			end
+		# 		end
 
-	# c1
-	# for k in inst.K
-	# 	sumX = 0
-	# 	get_j = 0
-	# 	for j in inst.V_p
-	# 		sumX += x[1,j,k]
-	# 		if x[1,j,k] == 1
-	# 			get_j = j
-	# 		end
-	# 	end
-	# 	sumX += x[1,2*inst.n+2,k]
-	# 	if x[1,2*inst.n+2,k] == 1
-	# 		get_j = 2*inst.n+2
-	# 	end
-	# 	# println(k)
-	# 	println(sumX == 1)
-	# 	println(1,' ',get_j,' ',k)
-	# 	println(x[1,get_j,k])
-	# 	# @constraint(model, sumX == 1, base_name = "c1")
-	# end
-	# println()
-	# # c2
-	# for k in inst.K
-	# 	for i in inst.V[2:length(inst.V)]
-	# 		sum1 = 0
-	# 		get_j = 0
-	# 		for (j,p) in inst.A
-	# 			if p == i
-	# 				sum1 += x[j,i,k]
-	# 				if x[j,i,k] == 1
-	# 					get_j = j
-	# 				end
-	# 			end
-	# 		end
+		# 		if sum1 > 0
+		# 			println(get_j, i, k)
+		# 			println(x[get_j,i,k])
+		# 		end
+		# 		println(sum1)
+		# 		sum2 = 0
+		# 		get_j = 0
+		# 		for (p,j) in inst.A
+		# 			if p == i
+		# 				sum2 += x[i,j,k]
+		# 				if x[i,j,k] == 1
+		# 					get_j = j
+		# 				end
+		# 			end
+		# 		end
 
-	# 		if sum1 > 0
-	# 			println(get_j, i, k)
-	# 			println(x[get_j,i,k])
-	# 		end
-	# 		println(sum1)
-	# 		sum2 = 0
-	# 		get_j = 0
-	# 		for (p,j) in inst.A
-	# 			if p == i
-	# 				sum2 += x[i,j,k]
-	# 				if x[i,j,k] == 1
-	# 					get_j = j
-	# 				end
-	# 			end
-	# 		end
+		# 		if sum2 > 0
+		# 			println(i, get_j, k)
+		# 			println(x[i,get_j,k])
+		# 		end
+		# 		println(sum2)
+		# 		println(sum1 - sum2 == 0)
 
-	# 		if sum2 > 0
-	# 			println(i, get_j, k)
-	# 			println(x[i,get_j,k])
-	# 		end
-	# 		println(sum2)
-	# 		println(sum1 - sum2 == 0)
+		# 		# @constraint(model, sum1 - sum2 == 0, base_name = "c2")
+		# 	end
+		# end
+		# println()
 
-	# 		# @constraint(model, sum1 - sum2 == 0, base_name = "c2")
-	# 	end
-	# end
-	# println()
+		# # c3
+		# for k in inst.K
+		# 	sumX = 0
+		# 	get_j = 0
+		# 	for j in inst.V_d
+		# 		sumX += x[j,2*inst.n+2,k]
+		# 		if x[j,2*inst.n+2,k] == 1
+		# 			get_j = j
+		# 		end
+		# 	end
+		# 	sumX += x[1,2*inst.n+2, k]
+		# 	if x[1,2*inst.n+2,k] == 1
+		# 		get_j = 1
+		# 	end
+		# 	println(get_j, 2*inst.n+2, k)
+		# 	println(x[get_j, 2*inst.n+2, k])
+		# 	println(sumX)
+		# 	println(sumX == 1)
+		# 	# @constraint(model, sumX == 1, base_name = "c3")
+		# end
 
-	# # c3
-	# for k in inst.K
-	# 	sumX = 0
-	# 	get_j = 0
-	# 	for j in inst.V_d
-	# 		sumX += x[j,2*inst.n+2,k]
-	# 		if x[j,2*inst.n+2,k] == 1
-	# 			get_j = j
-	# 		end
-	# 	end
-	# 	sumX += x[1,2*inst.n+2, k]
-	# 	if x[1,2*inst.n+2,k] == 1
-	# 		get_j = 1
-	# 	end
-	# 	println(get_j, 2*inst.n+2, k)
-	# 	println(x[get_j, 2*inst.n+2, k])
-	# 	println(sumX)
-	# 	println(sumX == 1)
-	# 	# @constraint(model, sumX == 1, base_name = "c3")
-	# end
+		# println()
+		# # c4
+		# for i in inst.V[2:length(inst.V)]
+		# 	sumX = 0
+		# 	get_j = 0
+		# 	get_k = 0
+		# 	for k in inst.K
+		# 		for (j,p) in inst.A
+		# 			if p == i
+		# 				sumX += x[j,i,k]
+		# 				if x[j,i,k] == 1
+		# 					get_j = j
+		# 					get_k = k
+		# 				end
+		# 			end
+		# 		end
+		# 	end
+		# 	println(get_j, i, get_k)
+		# 	println(x[get_j,i,get_k])
+		# 	println(sumX)
+		# 	println(sumX == 1)
+		# 	# @constraint(model, sumX == 1, base_name="c4")
+		# end
 
-	# println()
-	# # c4
-	# for i in inst.V[2:length(inst.V)]
-	# 	sumX = 0
-	# 	get_j = 0
-	# 	get_k = 0
-	# 	for k in inst.K
-	# 		for (j,p) in inst.A
-	# 			if p == i
-	# 				sumX += x[j,i,k]
-	# 				if x[j,i,k] == 1
-	# 					get_j = j
-	# 					get_k = k
-	# 				end
-	# 			end
-	# 		end
-	# 	end
-	# 	println(get_j, i, get_k)
-	# 	println(x[get_j,i,get_k])
-	# 	println(sumX)
-	# 	println(sumX == 1)
-	# 	# @constraint(model, sumX == 1, base_name="c4")
-	# end
+		# println()
+		# # c5
+		# for k in inst.K
+		# 	for i in inst.V_p
+		# 		sum1 = 0
+		# 		get_j = 0
+		# 		for (j,p) in inst.A
+		# 			if p == i
+		# 				sum1 += x[j,i,k]
+		# 				if x[j,i,k] == 1
+		# 					get_j = j
+		# 				end
+		# 			end
+		# 		end
 
-	# println()
-	# # c5
-	# for k in inst.K
-	# 	for i in inst.V_p
-	# 		sum1 = 0
-	# 		get_j = 0
-	# 		for (j,p) in inst.A
-	# 			if p == i
-	# 				sum1 += x[j,i,k]
-	# 				if x[j,i,k] == 1
-	# 					get_j = j
-	# 				end
-	# 			end
-	# 		end
+		# 		if sum1 > 0
+		# 			println(get_j, i, k)
+		# 			println(x[get_j,i,k])
+		# 		end
+		# 		println(sum1)
 
-	# 		if sum1 > 0
-	# 			println(get_j, i, k)
-	# 			println(x[get_j,i,k])
-	# 		end
-	# 		println(sum1)
+		# 		sum2 = 0
+		# 		get_j = 0
+		# 		for (j,p) in inst.A
+		# 			if p == inst.n+i
+		# 				sum2 += x[j,inst.n+i,k]
+		# 				if x[j,inst.n+i,k] == 1
+		# 					get_j = j
+		# 				end
+		# 			end
+		# 		end
 
-	# 		sum2 = 0
-	# 		get_j = 0
-	# 		for (j,p) in inst.A
-	# 			if p == inst.n+i
-	# 				sum2 += x[j,inst.n+i,k]
-	# 				if x[j,inst.n+i,k] == 1
-	# 					get_j = j
-	# 				end
-	# 			end
-	# 		end
+		# 		if sum2 > 0
+		# 			println(get_j, i+inst.n, k)
+		# 			println(x[get_j,inst.n+i,k])
+		# 		end
+		# 		println(sum2)
 
-	# 		if sum2 > 0
-	# 			println(get_j, i+inst.n, k)
-	# 			println(x[get_j,inst.n+i,k])
-	# 		end
-	# 		println(sum2)
+		# 		println(sum1 == sum2)
 
-	# 		println(sum1 == sum2)
-
-	# 		# @constraint(model, sum1 == sum2, base_name="c5")
-	# 	end
-	# end
-	# println()
+		# 		# @constraint(model, sum1 == sum2, base_name="c5")
+		# 	end
+		# end
+		# println()
 
 	routes = Any[]
-	times = Any[]
+	timesk = Any[]
+	timesh = Any[]
 	# println(x)
 
 	for k in inst.K
 		push!(routes, Any[])
-		push!(times, Any[])
+		push!(timesk, Any[])
+		push!(timesh, Any[])
 		i=1
 		while i != length(inst.Vprime)
-			push!(routes[k], inst.tasks[inst.refs[i]].id)
-			push!(times[k], t[i])
+			push!(routes[k], i)
+			push!(timesk[k], t[i])
 			for j in inst.Vprime
 				if (i,j) in inst.A && x[i,j,k] > 0
+					if (i,j) in inst.A_m
+						for h in inst.H
+							if phi[i,j,h] > 0
+								push!(timesh[k], (h, alpha[i,j,h]))
+								break
+							end
+						end
+					end
 					i = j
 					break
 				end
 			end
 		end
-		push!(routes[k], inst.tasks[inst.refs[i]].id)
-		push!(times[k], C[k])
+		push!(routes[k], i)
+		push!(timesk[k], C[k])
 	end
 
-	sol = Solution(routes, times)
+	sol = Solution(routes, timesk, timesh)
 
 	return sol
 
 end # function createSolutionMelo()
 
+function printTaskDetail(inst::InstanceData, task, tk, th=(0,0.0))
+	println("\tid: ", task.id)
+	println("\t\t(x,y,z): ", (task.x, task.y, task.z))
+	println("\t\tdem: ", task.dem)
+	println("\t\tearl: ", task.earl)
+	println("\t\tlat: ", task.lat)
+	println("\t\tservt: ", task.servt)
+	println("\t\tpid: ", task.pid)
+	println("\t\tdid: ", task.did)
+	println("\t\ttk: ", tk)
+	println("\t\t(h,th): ", th)
+	println()
+end # function printTaskDetail()
+
+
+function printRouteDetail(inst::InstanceData, route, timek, timeh, k)
+	zk = inst.tasks[inst.refs[route[1]]].z
+	j = 0
+	for i in 1:length(route)
+		if zk != inst.tasks[inst.refs[route[i]]].z
+			j+=1
+			println("\tUsing Machine: ", timeh[j][1])
+			if i != 1 
+				println("\tdelta_t[",inst.refs[route[i-1]]-1,"][",timeh[j][1],"]: ",inst.d_bar[route[i-1]][timeh[j][1]][k])
+				println("\tO[",zk,"][",inst.tasks[inst.refs[route[i]]].z,"]: ", inst.O[route[i-1]][route[i]][timeh[j][1]])
+				println("\tdelta_t[",timeh[j][1],"][",inst.refs[route[i]]-1,"]: ",inst.d_bar[route[i]][timeh[j][1]][k])
+				println()
+			end
+			printTaskDetail(inst, inst.tasks[inst.refs[route[i]]], timek[i], timeh[j])
+		else
+			if i != 1 
+				println("\tdelta_t[",inst.refs[route[i-1]]-1,"][",inst.refs[route[i]]-1,"]: ",inst.d[route[i-1]][route[i]][k])
+				println()
+			end
+			printTaskDetail(inst, inst.tasks[inst.refs[route[i]]], timek[i])
+		end
+
+		zk = inst.tasks[inst.refs[route[i]]].z
+	end
+end # function printRouteDetail()
+
 function printMeloFormulationSolution(inst::InstanceData, sol::Solution)
 	for k in inst.K
-		print(k,' ')
-		for i in 1:length(sol.routes[k])
-			print(sol.routes[k][i], '(', sol.times[k][i], ')', " --> ")
-		end
+		println("Route ", k," :")
+		printRouteDetail(inst, sol.routes[k], sol.timesk[k], sol.timesh[k], k)
 		println()
 	end
 
-end # function printMeloFormulationSolution
+end # function printMeloFormulationSolution()
 
 function validateSolution(inst::InstanceData, sol::Solution)
-	
-	
+
+	for k in inst.K
+		time = 0
+	end
 	return true
+
+end # function validateSolution()
+
 end # module
