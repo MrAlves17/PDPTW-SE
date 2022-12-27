@@ -3,6 +3,7 @@ module Data
 using Infinity
 
 struct InstanceData
+	name
 	vehicles
 	tasks
 	machines
@@ -21,6 +22,7 @@ struct InstanceData
 	H
 	H_e
 	d_bar
+	f
 	O
 	n
 	s
@@ -65,6 +67,8 @@ end # function euclidean_dist
 function readData(instanceFile, params)
 
 	println("Running Data.readData with file $(instanceFile)")
+	name = basename(instanceFile[1:length(instanceFile)-1])
+	println(name)
 	vehicles = instanceFile * "vehicles.csv"
 	tasks = instanceFile * "tasks.csv"
 	machines = instanceFile * "machines.csv"
@@ -246,27 +250,40 @@ function readData(instanceFile, params)
 		end
 	end
 
-	O = Any[]
+	f = Any[]
 	for i in Vprime
-		push!(O, Any[])
+		push!(f, Any[])
+		for h in H
+			if machines[h].lz <= tasks[refs[i]].z <= machines[h].hz
+				push!(f[i], tasks[refs[i]].z)
+			else
+				push!(f[i], -1)
+			end
+
+		end
+	end
+
+
+	O = Dict{Tuple{Int64,Int64,Int64}, Float64}()
+	for i in Vprime
 		for j in Vprime
-			push!(O[i], Any[])
 			for h in H
-				if (i,j) in A_m && h in H_e[(i,j)]
-					push!(O[i][j], abs(tasks[refs[i]].z - tasks[refs[j]].z)/machines[h].spd) 
-				else
-					push!(O[i][j], infty)
+				if f[i][h] != -1 && f[j][h] != -1
+					O[(f[i][h],f[j][h], h)] = abs(f[i][h] - f[j][h])/machines[h].spd
+				else 
+					O[(f[i][h],f[j][h], h)] = infty
 				end
 			end
 		end
 	end
+	println(O)
 
 	s = Any[]
 	for i in Vprime
 		push!(s, tasks[refs[i]].servt)
 	end
 
-	inst = InstanceData(vehicles, tasks, machines, refs, V, V_p, V_d, Vprime, q, K, Q, d, A, A_m, A_s, H, H_e, d_bar, O, n, s)
+	inst = InstanceData(name, vehicles, tasks, machines, refs, V, V_p, V_d, Vprime, q, K, Q, d, A, A_m, A_s, H, H_e, d_bar, f, O, n, s)
 	for i in inst.refs
 		println(inst.tasks[i])
 	end

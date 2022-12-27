@@ -11,6 +11,7 @@ struct Solution
 	routes
 	timesk
 	timesh
+	arcsh
 end
 
 export meloFormulation
@@ -40,7 +41,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	@variable(model, t[i=inst.V] >= 0)
 	@variable(model, C[k=inst.K] >= 0)
 	@variable(model, phi[i=inst.Vprime, j=inst.Vprime, h=inst.H; (i,j) in inst.A_m], binary = true)
-	@variable(model, gamma[i=inst.Vprime, j=inst.Vprime, iprime=inst.Vprime, jprime=inst.Vprime, h=inst.H; (i,j) in inst.A_m && (iprime, jprime) in inst.A_m], binary = true)
+	@variable(model, gamma[i=inst.Vprime, j=inst.Vprime, iprime=inst.Vprime, jprime=inst.Vprime, h=inst.H; ((i,j) in inst.A_m) && ((iprime, jprime) in inst.A_m) && (i,j) != (iprime,jprime)], binary = true)
 	@variable(model, alpha[i=inst.Vprime, j=inst.Vprime, h=inst.H; (i,j) in inst.A_m] >= 0)
 
 	### Routing Constraints ###
@@ -146,7 +147,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 		end
 	end
 
-
+	println("Finished Routing constraints")
 	# # ### Scheduling constraints ###
 
 	# c12
@@ -200,47 +201,55 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 		for k in inst.K
 			for (i,j) in inst.A_m
 				if j in inst.V
-					@constraint(model, t[j] >= alpha[i,j,h] + inst.O[i][j][h] + inst.d_bar[j][h][k] - M*(2-phi[i,j,h]-x[i,j,k]), base_name = "c18")
+					@constraint(model, t[j] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.d_bar[j][h][k] - M*(2-phi[i,j,h]-x[i,j,k]), base_name = "c18")
 				end
 			end
 		end
 	end
 
-	# # c19
-	# for h in inst.H
-	# 	for (i,j) in inst.A_m
-	# 		for (iprime, jprime) in inst.A_m
-	# 			@constraint(model, gamma[i,j,iprime,jprime,h] + gamma[iprime,jprime,i,j,h] >= phi[i,j,h] + phi[iprime, jprime, h] - 1, base_name = "c19")
-	# 		end
-	# 	end
-	# end
+	# c19
+	for h in inst.H
+		for (i,j) in inst.A_m
+			for (iprime, jprime) in inst.A_m
+				if (i,j) != (iprime, jprime)
+					@constraint(model, gamma[i,j,iprime,jprime,h] + gamma[iprime,jprime,i,j,h] >= phi[i,j,h] + phi[iprime, jprime, h] - 1, base_name = "c19")
+				end
+			end
+		end
+	end
 
-	# # c20
-	# for h in inst.H
-	# 	for (i,j) in inst.A_m
-	# 		for (iprime, jprime) in inst.A_m
-	# 			@constraint(model, gamma[i,j,iprime,jprime,h] <= phi[i,j,h], base_name = "c20")
-	# 		end
-	# 	end
-	# end
+	# c20
+	for h in inst.H
+		for (i,j) in inst.A_m
+			for (iprime, jprime) in inst.A_m
+				if (i,j) != (iprime, jprime)
+					@constraint(model, gamma[i,j,iprime,jprime,h] + gamma[iprime,jprime,i,j,h] <= 1 , base_name = "c20")
+				end
+			end
+		end
+	end
 
-	# # c21
-	# for h in inst.H
-	# 	for (i,j) in inst.A_m
-	# 		for (iprime, jprime) in inst.A_m
-	# 			@constraint(model, gamma[iprime,jprime,i,j,h] <= phi[i,j,h], base_name = "c21")
-	# 		end
-	# 	end
-	# end
+	# c21
+	for h in inst.H
+		for (i,j) in inst.A_m
+			for (iprime, jprime) in inst.A_m
+				if (i,j) != (iprime, jprime)
+					@constraint(model, 2*gamma[i,j,iprime,jprime,h] <= phi[i,j,h] + phi[iprime,jprime,h], base_name = "c21")
+				end
+			end
+		end
+	end
 
-	# # c22
-	# for h in inst.H
-	# 	for (i,j) in inst.A_m
-	# 		for (iprime, jprime) in inst.A_m
-	# 			@constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[i][j][h] + inst.O[j][iprime][h] - M*(1-gamma[i,j,iprime,jprime,h]), base_name = "c22")
-	# 		end
-	# 	end
-	# end
+	# c22
+	for h in inst.H
+		for (i,j) in inst.A_m
+			for (iprime, jprime) in inst.A_m
+				if (i,j) != (iprime, jprime)
+					@constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.O[(inst.f[j][h], inst.f[iprime][h], h)] - M*(1 - gamma[i,j,iprime,jprime,h]), base_name = "c22")
+				end
+			end
+		end
+	end
 
 	# c23
 	for k in inst.K
@@ -256,19 +265,22 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 		for k in inst.K
 			for (i,p) in inst.A_m
 				if p == 2*inst.n+2
-					@constraint(model, C[k] >= alpha[i,2*inst.n+2,h] + inst.O[i][2*inst.n+2][h] + inst.d_bar[2*inst.n+2][h][k] - M*(1-x[i,2*inst.n+2,k]), base_name = "c24")
+					@constraint(model, C[k] >= alpha[i,2*inst.n+2,h] + inst.O[(inst.f[i][h],inst.f[2*inst.n+2][h],h)] + inst.d_bar[2*inst.n+2][h][k] - M*(2-phi[i,2*inst.n+2,h]-x[i,2*inst.n+2,k]), base_name = "c24")
 				end
 			end
 		end
 	end
+	println("Finished Scheduling constraints")
 
 
 	# ### Objective function ###
 
 	# c30
 	@objective(model, Min, sum(C))
-
+	println("Finished Objective function")
 	write_to_file(model,"modelo.lp")
+	println("Model file created")
+
 
 	t1 = time_ns()
 	println("starting")
@@ -277,6 +289,17 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	t2 = time_ns()
 	elapsedtime = (t2-t1)/1.0e9
 
+	opt = 0
+	if termination_status(model) == OPTIMAL
+	    println("Solution is optimal")
+	    opt = 1
+	elseif termination_status(model) == TIME_LIMIT && has_values(model)
+	    println("Solution is suboptimal due to a time limit, but a primal solution is available")
+	else
+	    error("The model was not solved correctly.")
+	end
+	println("  objective value = ", objective_value(model))
+
 	println(status)
 	bestsol = sum(value.(C))
 	bestbound = objective_bound(model)
@@ -284,10 +307,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	time = solve_time(model)
 	gap = 100*(bestsol-bestbound)/bestsol
 
-	opt = 0
-	if status == :Optimal
-		opt = 1
-        end
+
 
 	open("saida.txt","a") do f
 		write(f,";bestsol=$(bestsol);time=$(time)\n")
@@ -303,7 +323,8 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	alpha = value.(alpha)
 
 	sol = createSolutionMelo(inst,x,z,t,C,phi,gamma,alpha)
-	printMeloFormulationSolution(inst,sol)
+	printDetailMeloFormulationSolution(inst,sol)
+	saveMeloFormulationSolution(inst,sol)
 
 	if validateSolution(inst, sol)
 		println("Everything is awesome!")
@@ -313,165 +334,25 @@ end #function meloFormulation()
 
 function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 	
-	# Testing constraints
-		M = 999999
-		# c1
-		# for k in inst.K
-		# 	sumX = 0
-		# 	get_j = 0
-		# 	for j in inst.V_p
-		# 		sumX += x[1,j,k]
-		# 		if x[1,j,k] == 1
-		# 			get_j = j
-		# 		end
-		# 	end
-		# 	sumX += x[1,2*inst.n+2,k]
-		# 	if x[1,2*inst.n+2,k] == 1
-		# 		get_j = 2*inst.n+2
-		# 	end
-		# 	# println(k)
-		# 	println(sumX == 1)
-		# 	println(1,' ',get_j,' ',k)
-		# 	println(x[1,get_j,k])
-		# 	# @constraint(model, sumX == 1, base_name = "c1")
-		# end
-		# println()
-		# # c2
-		# for k in inst.K
-		# 	for i in inst.V[2:length(inst.V)]
-		# 		sum1 = 0
-		# 		get_j = 0
-		# 		for (j,p) in inst.A
-		# 			if p == i
-		# 				sum1 += x[j,i,k]
-		# 				if x[j,i,k] == 1
-		# 					get_j = j
-		# 				end
-		# 			end
-		# 		end
-
-		# 		if sum1 > 0
-		# 			println(get_j, i, k)
-		# 			println(x[get_j,i,k])
-		# 		end
-		# 		println(sum1)
-		# 		sum2 = 0
-		# 		get_j = 0
-		# 		for (p,j) in inst.A
-		# 			if p == i
-		# 				sum2 += x[i,j,k]
-		# 				if x[i,j,k] == 1
-		# 					get_j = j
-		# 				end
-		# 			end
-		# 		end
-
-		# 		if sum2 > 0
-		# 			println(i, get_j, k)
-		# 			println(x[i,get_j,k])
-		# 		end
-		# 		println(sum2)
-		# 		println(sum1 - sum2 == 0)
-
-		# 		# @constraint(model, sum1 - sum2 == 0, base_name = "c2")
-		# 	end
-		# end
-		# println()
-
-		# # c3
-		# for k in inst.K
-		# 	sumX = 0
-		# 	get_j = 0
-		# 	for j in inst.V_d
-		# 		sumX += x[j,2*inst.n+2,k]
-		# 		if x[j,2*inst.n+2,k] == 1
-		# 			get_j = j
-		# 		end
-		# 	end
-		# 	sumX += x[1,2*inst.n+2, k]
-		# 	if x[1,2*inst.n+2,k] == 1
-		# 		get_j = 1
-		# 	end
-		# 	println(get_j, 2*inst.n+2, k)
-		# 	println(x[get_j, 2*inst.n+2, k])
-		# 	println(sumX)
-		# 	println(sumX == 1)
-		# 	# @constraint(model, sumX == 1, base_name = "c3")
-		# end
-
-		# println()
-		# # c4
-		# for i in inst.V[2:length(inst.V)]
-		# 	sumX = 0
-		# 	get_j = 0
-		# 	get_k = 0
-		# 	for k in inst.K
-		# 		for (j,p) in inst.A
-		# 			if p == i
-		# 				sumX += x[j,i,k]
-		# 				if x[j,i,k] == 1
-		# 					get_j = j
-		# 					get_k = k
-		# 				end
-		# 			end
-		# 		end
-		# 	end
-		# 	println(get_j, i, get_k)
-		# 	println(x[get_j,i,get_k])
-		# 	println(sumX)
-		# 	println(sumX == 1)
-		# 	# @constraint(model, sumX == 1, base_name="c4")
-		# end
-
-		# println()
-		# # c5
-		# for k in inst.K
-		# 	for i in inst.V_p
-		# 		sum1 = 0
-		# 		get_j = 0
-		# 		for (j,p) in inst.A
-		# 			if p == i
-		# 				sum1 += x[j,i,k]
-		# 				if x[j,i,k] == 1
-		# 					get_j = j
-		# 				end
-		# 			end
-		# 		end
-
-		# 		if sum1 > 0
-		# 			println(get_j, i, k)
-		# 			println(x[get_j,i,k])
-		# 		end
-		# 		println(sum1)
-
-		# 		sum2 = 0
-		# 		get_j = 0
-		# 		for (j,p) in inst.A
-		# 			if p == inst.n+i
-		# 				sum2 += x[j,inst.n+i,k]
-		# 				if x[j,inst.n+i,k] == 1
-		# 					get_j = j
-		# 				end
-		# 			end
-		# 		end
-
-		# 		if sum2 > 0
-		# 			println(get_j, i+inst.n, k)
-		# 			println(x[get_j,inst.n+i,k])
-		# 		end
-		# 		println(sum2)
-
-		# 		println(sum1 == sum2)
-
-		# 		# @constraint(model, sum1 == sum2, base_name="c5")
-		# 	end
-		# end
-		# println()
-
 	routes = Any[]
 	timesk = Any[]
 	timesh = Any[]
+	arcsh = Any[]
 	# println(x)
+
+	# for h in inst.H
+	# 	println(h)
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime,jprime) in inst.A_m
+	# 			if (i,j) != (iprime, jprime)
+	# 				println('\t',i,' ',j)
+	# 				println('\t',iprime,' ',jprime)
+	# 				println('\t',gamma[i,j,iprime,jprime,h])
+	# 				println()
+	# 			end
+	# 		end
+	# 	end
+	# end
 
 	for k in inst.K
 		push!(routes, Any[])
@@ -487,6 +368,7 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 						for h in inst.H
 							if phi[i,j,h] > 0
 								push!(timesh[k], (h, alpha[i,j,h]))
+								push!(arcsh, (inst.tasks[inst.refs[i]].id,inst.tasks[inst.refs[j]].id,inst.machines[h].id))
 								break
 							end
 						end
@@ -496,11 +378,19 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 				end
 			end
 		end
+
+
+		# for (i,j) in inst.A_m
+		# 	for (iprime,jprime) in inst.A_m
+		# 		for h in inst.H
+		# 			if phi[i,j,h] > 0 && phi[iprime,jprime,h] > 0
+		# 				push!()
 		push!(routes[k], i)
 		push!(timesk[k], C[k])
 	end
+	println("banana final")
 
-	sol = Solution(routes, timesk, timesh)
+	sol = Solution(routes, timesk, timesh, arcsh)
 
 	return sol
 
@@ -527,17 +417,18 @@ function printRouteDetail(inst::InstanceData, route, timek, timeh, k)
 	for i in 1:length(route)
 		if zk != inst.tasks[inst.refs[route[i]]].z
 			j+=1
-			println("\tUsing Machine: ", timeh[j][1])
+			h = timeh[j][1]
+			println("\tUsing Machine: ", h)
 			if i != 1 
-				println("\tdelta_t[",inst.refs[route[i-1]]-1,"][",timeh[j][1],"]: ",inst.d_bar[route[i-1]][timeh[j][1]][k])
-				println("\tO[",zk,"][",inst.tasks[inst.refs[route[i]]].z,"]: ", inst.O[route[i-1]][route[i]][timeh[j][1]])
-				println("\tdelta_t[",timeh[j][1],"][",inst.refs[route[i]]-1,"]: ",inst.d_bar[route[i]][timeh[j][1]][k])
+				println("\tTask ", inst.refs[route[i-1]]-1," -> Machine ",h,": ",inst.d_bar[route[i-1]][h][k])
+				println("\tIsland ",zk," -> Island ",inst.tasks[inst.refs[route[i]]].z,": ", inst.O[(inst.f[route[i-1]][h],inst.f[route[i]][h], h)])
+				println("\tMachine ",h," -> Task ",inst.refs[route[i]]-1,": ",inst.d_bar[route[i]][h][k])
 				println()
 			end
 			printTaskDetail(inst, inst.tasks[inst.refs[route[i]]], timek[i], timeh[j])
 		else
 			if i != 1 
-				println("\tdelta_t[",inst.refs[route[i-1]]-1,"][",inst.refs[route[i]]-1,"]: ",inst.d[route[i-1]][route[i]][k])
+				println("\tTask ",inst.refs[route[i-1]]-1," -> Task ",inst.refs[route[i]]-1,": ",inst.d[route[i-1]][route[i]][k])
 				println()
 			end
 			printTaskDetail(inst, inst.tasks[inst.refs[route[i]]], timek[i])
@@ -547,14 +438,30 @@ function printRouteDetail(inst::InstanceData, route, timek, timeh, k)
 	end
 end # function printRouteDetail()
 
-function printMeloFormulationSolution(inst::InstanceData, sol::Solution)
+function printDetailMeloFormulationSolution(inst::InstanceData, sol::Solution)
 	for k in inst.K
-		println("Route ", k," :")
-		printRouteDetail(inst, sol.routes[k], sol.timesk[k], sol.timesh[k], k)
-		println()
+		if length(sol.routes[k]) > 2
+			println("Route ", k," :")
+			printRouteDetail(inst, sol.routes[k], sol.timesk[k], sol.timesh[k], k)
+			println()
+		end
 	end
+	println(sol.arcsh)
 
-end # function printMeloFormulationSolution()
+end # function printDetailMeloFormulationSolution()
+
+function saveMeloFormulationSolution(inst::InstanceData, sol::Solution)
+	sol_filename = "solution_" * inst.name * ".txt"
+	file = open(sol_filename, "w")
+	write(file, uppercase(inst.name))
+	for k in inst.K
+		write(file, "Route " * string(k) * ": ")
+		for fid in sol.routes[k]
+			write(file, string(inst.tasks[inst.refs[fid]].id) * " ")
+		end
+		write(file, '\n')
+	end
+end # function printDetailMeloFormulationSolution()
 
 function validateSolution(inst::InstanceData, sol::Solution)
 
