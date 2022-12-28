@@ -451,7 +451,7 @@ function printDetailMeloFormulationSolution(inst::InstanceData, sol::Solution)
 end # function printDetailMeloFormulationSolution()
 
 function saveMeloFormulationSolution(inst::InstanceData, sol::Solution)
-	sol_filename = "solution_" * inst.name * ".txt"
+	sol_filename = "solutions/solution_" * inst.name * ".txt"
 	file = open(sol_filename, "w")
 	write(file, uppercase(inst.name))
 	for k in inst.K

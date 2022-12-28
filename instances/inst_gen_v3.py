@@ -15,13 +15,43 @@ def gen_z_values(tasks):
 
 	return z
 
+def gen_task(task_no, ):
 
 
-def gen_tasks(n_tasks):
+def gen_tasks(n_tasks, t_inst):
+	n_requests = n_tasks//2
 	col_names = ['task_no', 'x', 'y', 'z', 'dem', 'earl', 'lat', 'servt', 'pid', 'did']
 	tasks = []
+	if t_inst == "lc":
+		n_clusters = math.floor(math.log(n_requests))
+		for c in range(n_clusters):
+			x_c = np.random.randint(0, 100)
+			y_c = np.random.randint(0, 100)
+			z_c = np.random.randint(0, 1)
+			for i in range(c*n_requests//n_clusters,(c+1)*n_requests//n_clusters-1):
+				x_t = x_c + np.random.randint(-2,2)*5
+				y_t = y_c + np.random.randint(-2,2)*5
+				z_t = z_c
+
+				dem = np.random.randint(1,4)*10
+				earl = np.random.randint(0,1440-150)
+				lat = np.random.randint(earl+30, 1440-100)
+				servt = 90
+				pid = 0
+				did = n_requests+i
+
+				task = [i+1, x_t, y_t, z_t, dem, earl, lat, servt, pid, did]
+				tasks.push(task)
+
+			# create the rest of the tasks for the last cluster
+		
+
+
+
+
+
 	for i in range(n_tasks):
-		tasks.append(gen_task())
+		tasks.append(gen_task(i))
 	tasks = pd.DataFrame(tasks[1:], columns=col_names)
 	x_values = [int(tasks['x'][i]) for i in range(len(tasks['x']))]
 	global div_line
@@ -73,25 +103,26 @@ def gen_machines(tasks):
 	machines.to_csv('machines.csv', header=False, index=False)
 	return machines
 
+def gen_inst_files(group):
+	type_inst = ["lc", "lr", "lrc"]
+	for i in range(3):
+		for j in range(1,12+1):
+			inst_name = type_inst[i]+"_"+str(100+j)
+			os.chdir(group)
+			if not os.path.isdir(inst_name):
+				os.mkdir(inst_name)
+			os.chdir(inst_name)
 
-def gen_inst_files(filename, group, new_group):
-	os.chdir(new_group)
-	if not os.path.isdir(filename[:-4]):
-		os.mkdir(filename[:-4])
-	os.chdir(filename[:-4])
+			vehicles = gen_vehicles(5) 
+			tasks = gen_tasks(10, type_inst[i])
+			machines = gen_machines(tasks, type_inst[i])
 
-	vehicles = gen_vehicles(5)
-	tasks = gen_tasks(inst_lines)
-	machines = gen_machines(tasks)
-
-	os.chdir('../../')
+			os.chdir('../../')
 
 np.random.seed(0)
 n_machines = 2
-new_group = group[:3]+'tw-se_1_10'
+new_group = 'pdptw-se_1_10'
 if not os.path.isdir(new_group):
 	os.mkdir(new_group)
 
-for filename in filenames:
-	gen_inst_files(filename, group, new_group)
-	# break
+gen_inst_files(new_group)
