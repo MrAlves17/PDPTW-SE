@@ -36,3 +36,5 @@
 build/
 visualizer/p5.js
 *modelo.lp
+
+*saida.txt

@@ -461,7 +461,8 @@ function saveMeloFormulationSolution(inst::InstanceData, sol::Solution)
 		end
 		write(file, '\n')
 	end
-end # function printDetailMeloFormulationSolution()
+	close(file)
+end # function saveMeloFormulationSolution()
 
 function validateSolution(inst::InstanceData, sol::Solution)
 

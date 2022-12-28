@@ -19,20 +19,17 @@ import Formulations
 
 # Read the parameters from command line
 
-type = ["37","40","43"]
+type = ["lc","lr","lrc"]
 for i in 1:3
-	for j in 1:12
-		nameInstance = "instances/Murray_Chu_2015_test_data/FSTSP/FSTSP_10_customer_problems/20140810T1234"*type[i]*"v"*string(j)*"/"
-		args = ["testes.jl","--inst",nameInstance, "--form", ARGS[1], "--maxtime", "30"]
-		params = Parameters.readInputParameters(args)
+	for (root, dirs, files) in walkdir("../../instances/pdptw-se_2_100/")
+		for dir in dirs
+			nameInstance = "../../instances/pdptw-se_2_100/"*dir*'/'
+			args = ["testes.jl","--inst",nameInstance, "--maxtime", "30", "--cutoff", "5"]
+			params = Parameters.readInputParameters(args)
 
-		# Read instance data
-		inst = Data.readData(params.instName)
-
-		if params.form == "murray"
-			Formulations.murrayFormulation(inst, params)
-		elseif params.form == "freitas"
-			Formulations.freitasFormulation(inst, params)
+			# Read instance data
+			inst = Data.readData(params.instName, params)
+			Formulations.meloFormulation(inst,params)
 		end
 	end
 end
