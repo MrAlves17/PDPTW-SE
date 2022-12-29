@@ -41,9 +41,9 @@ def gen_task_lr(i, n_requests, delivery):
 	y_t = np.random.randint(1, 33)*3
 	z_t = np.random.randint(0,2)
 
-	dem = np.random.randint(1,4)*10
-	earl = np.random.randint(0,1440-150)
-	lat = np.random.randint(earl+30, 1440-100)
+	dem = np.random.randint(1,5)*10
+	earl = np.random.randint(0,1440-300)
+	lat = np.random.randint(earl+30, 1440-150)
 	servt = 90
 	if delivery:
 		task_no = n_requests+i+1

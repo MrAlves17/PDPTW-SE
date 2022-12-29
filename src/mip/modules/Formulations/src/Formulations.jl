@@ -296,7 +296,8 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	elseif termination_status(model) == TIME_LIMIT && has_values(model)
 	    println("Solution is suboptimal due to a time limit, but a primal solution is available")
 	else
-	    error("The model was not solved correctly.")
+	    println("The model was not solved correctly.")
+	    return
 	end
 	println("  objective value = ", objective_value(model))
 
