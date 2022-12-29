@@ -123,7 +123,7 @@ def gen_tasks(n_tasks, t_inst):
 					created+=1
 
 			while created < n_requests:
-				tasks.append(gen_task_lr(i, n_requests, type_task))
+				tasks.append(gen_task_lr(created, n_requests, type_task))
 				created += 1
 
 
@@ -183,7 +183,7 @@ def gen_inst_files(group):
 			os.chdir('../../')
 
 np.random.seed(0)
-n_machines = 2
+n_machines = 3
 new_group = 'pdptw-se_1_10'
 if not os.path.isdir(new_group):
 	os.mkdir(new_group)
