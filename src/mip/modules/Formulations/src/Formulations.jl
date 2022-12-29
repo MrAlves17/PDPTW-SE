@@ -455,6 +455,7 @@ function saveMeloFormulationSolution(inst::InstanceData, sol::Solution)
 	sol_filename = "solutions/solution_" * inst.name * ".txt"
 	file = open(sol_filename, "w")
 	write(file, uppercase(inst.name))
+	write(file, '\n')
 	for k in inst.K
 		write(file, "Route " * string(k) * ": ")
 		for fid in sol.routes[k]

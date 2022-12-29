@@ -1,9 +1,11 @@
 class Customer {
-	constructor(id_, x_, y_, z_){
+	constructor(id_, x_, y_, z_, pid_, did_){
 		this.id = id_;
 		this.x = x_;
 		this.y = y_;
 		this.z = z_;
+		this.pid = pid_;
+		this.did = did_;
 	}
 }
 

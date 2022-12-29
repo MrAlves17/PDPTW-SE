@@ -13,21 +13,23 @@ def gen_z_values(tasks):
 
 	return z
 
-def gen_task_lc(cluster, i, n_requests, delivery):
+def gen_task_lc(cluster, i, n_requests, delivery, tasks):
 	x_t = min(max(cluster['x'] + np.random.randint(-2,2)*3,0),99)
 	y_t = min(max(cluster['y'] + np.random.randint(-2,2)*3,0),99)
 	z_t = cluster['z']
 
 	dem = np.random.randint(1,4)*10
-	earl = np.random.randint(0,1440-150)
-	lat = np.random.randint(earl+30, 1440-100)
 	servt = 90
 	if delivery:
 		task_no = n_requests+i+1
+		earl = np.random.randint(tasks[i+1][6] + 50,1440-300)
+		lat = np.random.randint(earl+50, 1440-100)
 		pid = i+1
 		did = 0
 	else:
 		task_no = i+1
+		earl = np.random.randint(0,1440-900)
+		lat = np.random.randint(earl+50, 1440-720)
 		pid = 0
 		did = n_requests+i+1
 
@@ -36,21 +38,23 @@ def gen_task_lc(cluster, i, n_requests, delivery):
 	# print(task)
 	return task
 
-def gen_task_lr(i, n_requests, delivery):
+def gen_task_lr(i, n_requests, delivery, tasks):
 	x_t = np.random.randint(1, 33)*3
 	y_t = np.random.randint(1, 33)*3
 	z_t = np.random.randint(0,2)
 
 	dem = np.random.randint(1,5)*10
-	earl = np.random.randint(0,1440-300)
-	lat = np.random.randint(earl+30, 1440-150)
 	servt = 90
 	if delivery:
 		task_no = n_requests+i+1
+		earl = np.random.randint(tasks[i+1][6] + 50,1440-300)
+		lat = np.random.randint(earl+50, 1440-100)
 		pid = i+1
 		did = 0
 	else:
 		task_no = i+1
+		earl = np.random.randint(0,1440-900)
+		lat = np.random.randint(earl+50, 1440-720)
 		pid = 0
 		did = n_requests+i+1
 
@@ -96,17 +100,17 @@ def gen_tasks(n_tasks, t_inst):
 					'z' : np.random.randint(0, 2)
 				}
 				for i in range(c*(n_requests//n_clusters),(c+1)*(n_requests//n_clusters)):
-					tasks.append(gen_task_lc(cluster, i, n_requests, type_task))
+					tasks.append(gen_task_lc(cluster, i, n_requests, type_task, tasks))
 					created+=1
 
 				while created < n_requests and c == n_clusters-1:
-					tasks.append(gen_task_lc(cluster, created, n_requests, type_task))
+					tasks.append(gen_task_lc(cluster, created, n_requests, type_task, tasks))
 					created+=1
 	elif t_inst == 'lr':
 		for type_task in range(2):
 			created = 0
 			for i in range(n_requests):
-				tasks.append(gen_task_lr(i, n_requests, type_task))
+				tasks.append(gen_task_lr(i, n_requests, type_task, tasks))
 	elif t_inst == "lrc":
 		n_clusters = math.floor(math.sqrt(n_requests))//2
 
@@ -119,11 +123,11 @@ def gen_tasks(n_tasks, t_inst):
 					'z' : np.random.randint(0, 2)
 				}
 				for i in range(c*(n_requests//(2*n_clusters)),(c+1)*(n_requests//(2*n_clusters))):
-					tasks.append(gen_task_lc(cluster, i, n_requests, type_task))
+					tasks.append(gen_task_lc(cluster, i, n_requests, type_task, tasks))
 					created+=1
 
 			while created < n_requests:
-				tasks.append(gen_task_lr(created, n_requests, type_task))
+				tasks.append(gen_task_lr(created, n_requests, type_task, tasks))
 				created += 1
 
 

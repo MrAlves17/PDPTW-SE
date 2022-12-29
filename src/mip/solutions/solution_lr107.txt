@@ -1,0 +1,6 @@
+LR107
+Route 1: 0 0 
+Route 2: 0 0 
+Route 3: 0 5 10 0 
+Route 4: 0 0 
+Route 5: 0 2 3 4 1 6 8 9 7 0 

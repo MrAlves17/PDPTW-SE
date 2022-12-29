@@ -34,8 +34,8 @@ let details_padding = 5;
 
 let truckContainer;
 let customerContainer;
-let xlimit = 0;
-let ylimit = 0;	
+let xlimit = 100;
+let ylimit = 100;	
 let zlimit = 0;
 let current_step = 0;
 let plottedCustomers = false;
@@ -106,14 +106,10 @@ function readTasksData(){
 		}
 	}
 	for(let i=0; i<tasksData.length; i++){
-		const c = new Customer(tasksData[i][0], tasksData[i][1], tasksData[i][2], tasksData[i][3]);
+		const c = new Customer(tasksData[i][0], tasksData[i][1], tasksData[i][2], tasksData[i][3], tasksData[i][8], tasksData[i][9]);
 		customers.push(c);
-		xlimit = max(xlimit, Number(c.x));
-		ylimit = max(ylimit, Number(c.y));
 		zlimit = max(zlimit, Number(c.z));
 	}
-	xlimit = max(xlimit, ylimit)
-	ylimit = xlimit
 
 	for(let i=0; i<customers.length; i++){
 		customers[i].x = map(customers[i].x, 0, xlimit, 0, cartesian_width);
@@ -263,16 +259,22 @@ function plotCustomers(){
 
 	for(let i=1; i<customers.length; i++){
 		if(observedCustomer == i){
-			strokeWeight(10);
+			textSize(15)
 		}else{
-			strokeWeight(5);
+			textSize(10)
 		}
 		if(observedCustomer < 0 || customers[i].z == customers[observedCustomer].z){
 			stroke((320-360/zlimit)/zlimit*customers[i].z + 360/zlimit, 100, 50)
+			fill(255,255,255)
 		}else{
 			stroke(0,0,0,0)
+			fill(0,0,0,0)
 		}
-		point(customers[i].x, customers[i].y);
+		if (customers[i].pid == 0){
+			text('p'+customers[i].id, customers[i].x, customers[i].y)
+		}else{
+			text('d'+(customers[i].id-(customers.length-1)/2), customers[i].x, customers[i].y)
+		}
 	}
 
 	for(let i=0; i<machines.length; i++){
