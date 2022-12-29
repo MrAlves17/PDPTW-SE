@@ -1,9 +1,7 @@
 import os
 import pandas as pd
-import np
+import numpy as np
 import math
-
-div_line = 0
 
 def gen_z_values(tasks):
 	z = []
@@ -15,54 +13,127 @@ def gen_z_values(tasks):
 
 	return z
 
-def gen_task(task_no, ):
+def gen_task_lc(cluster, i, n_requests, delivery):
+	x_t = min(max(cluster['x'] + np.random.randint(-2,2)*3,0),99)
+	y_t = min(max(cluster['y'] + np.random.randint(-2,2)*3,0),99)
+	z_t = cluster['z']
+
+	dem = np.random.randint(1,4)*10
+	earl = np.random.randint(0,1440-150)
+	lat = np.random.randint(earl+30, 1440-100)
+	servt = 90
+	if delivery:
+		task_no = n_requests+i+1
+		pid = i+1
+		did = 0
+	else:
+		task_no = i+1
+		pid = 0
+		did = n_requests+i+1
+
+
+	task = [task_no, x_t, y_t, z_t, dem, earl, lat, servt, pid, did]
+	# print(task)
+	return task
+
+def gen_task_lr(i, n_requests, delivery):
+	x_t = np.random.randint(1, 33)*3
+	y_t = np.random.randint(1, 33)*3
+	z_t = np.random.randint(0,2)
+
+	dem = np.random.randint(1,4)*10
+	earl = np.random.randint(0,1440-150)
+	lat = np.random.randint(earl+30, 1440-100)
+	servt = 90
+	if delivery:
+		task_no = n_requests+i+1
+		pid = i+1
+		did = 0
+	else:
+		task_no = i+1
+		pid = 0
+		did = n_requests+i+1
+
+
+	task = [task_no, x_t, y_t, z_t, dem, earl, lat, servt, pid, did]
+	# print(task)
+	return task
+
+def gen_depot():
+	# 0,35,35,0,0,0,230,0,0,0
+	task_no = 0
+	x_t = np.random.randint(13, 18)*3
+	y_t = np.random.randint(13, 18)*3
+	z_t = np.random.randint(0, 2)
+
+	dem = 0
+	earl = 0
+	lat = 1440
+	servt = 0
+	pid = 0
+	did = 0
+
+	task = [task_no, x_t, y_t, z_t, dem, earl, lat, servt, pid, did]
+	# print(task)
+	return task
 
 
 def gen_tasks(n_tasks, t_inst):
 	n_requests = n_tasks//2
 	col_names = ['task_no', 'x', 'y', 'z', 'dem', 'earl', 'lat', 'servt', 'pid', 'did']
 	tasks = []
+
+	tasks.append(gen_depot())
+
 	if t_inst == "lc":
-		n_clusters = math.floor(math.log(n_requests))
-		for c in range(n_clusters):
-			x_c = np.random.randint(0, 100)
-			y_c = np.random.randint(0, 100)
-			z_c = np.random.randint(0, 1)
-			for i in range(c*n_requests//n_clusters,(c+1)*n_requests//n_clusters-1):
-				x_t = x_c + np.random.randint(-2,2)*5
-				y_t = y_c + np.random.randint(-2,2)*5
-				z_t = z_c
+		n_clusters = math.floor(math.sqrt(n_requests))
+		for type_task in range(2):
+			created = 0
+			for c in range(n_clusters):
+				cluster = {
+					'x' : np.random.randint(1, 33)*3,
+					'y' : np.random.randint(1, 33)*3,
+					'z' : np.random.randint(0, 2)
+				}
+				for i in range(c*(n_requests//n_clusters),(c+1)*(n_requests//n_clusters)):
+					tasks.append(gen_task_lc(cluster, i, n_requests, type_task))
+					created+=1
 
-				dem = np.random.randint(1,4)*10
-				earl = np.random.randint(0,1440-150)
-				lat = np.random.randint(earl+30, 1440-100)
-				servt = 90
-				pid = 0
-				did = n_requests+i
+				while created < n_requests and c == n_clusters-1:
+					tasks.append(gen_task_lc(cluster, created, n_requests, type_task))
+					created+=1
+	elif t_inst == 'lr':
+		for type_task in range(2):
+			created = 0
+			for i in range(n_requests):
+				tasks.append(gen_task_lr(i, n_requests, type_task))
+	elif t_inst == "lrc":
+		n_clusters = math.floor(math.sqrt(n_requests))//2
 
-				task = [i+1, x_t, y_t, z_t, dem, earl, lat, servt, pid, did]
-				tasks.push(task)
+		for type_task in range(2):
+			created = 0
+			for c in range(n_clusters):
+				cluster = {
+					'x' : np.random.randint(1, 33)*3,
+					'y' : np.random.randint(1, 33)*3,
+					'z' : np.random.randint(0, 2)
+				}
+				for i in range(c*(n_requests//(2*n_clusters)),(c+1)*(n_requests//(2*n_clusters))):
+					tasks.append(gen_task_lc(cluster, i, n_requests, type_task))
+					created+=1
 
-			# create the rest of the tasks for the last cluster
-		
+			while created < n_requests:
+				tasks.append(gen_task_lr(i, n_requests, type_task))
+				created += 1
 
 
-
-
-
-	for i in range(n_tasks):
-		tasks.append(gen_task(i))
-	tasks = pd.DataFrame(tasks[1:], columns=col_names)
-	x_values = [int(tasks['x'][i]) for i in range(len(tasks['x']))]
-	global div_line
-	div_line = math.ceil((max(x_values)+min(x_values))/2)
-	tasks.insert(3, 'z', gen_z_values(tasks))
-	# print(tasks)
+	tasks = pd.DataFrame(tasks, columns=col_names)
+	print(tasks)
 	tasks.to_csv('tasks.csv', header=False, index=False)
 	return tasks
 
 def choose_capacity(a, b, k):
-	return np.random.randint(1,k)*a + b
+	return np.random.randint(1,k+1)*a + b
 
 def gen_vehicles(n_vehicles):
 	vehicles = []
@@ -74,28 +145,20 @@ def gen_vehicles(n_vehicles):
 	vehicles.to_csv('vehicles.csv', header=False, index=False)
 	return vehicles
 
-def choose_point(all_positions, mn, mx):
-	point = (div_line, random.randint(mn, mx))
-	while point in all_positions:
-		point = (div_line, random.randint(mn, mx))
-	all_positions.append(point)
+def choose_point():
+	point = (np.random.randint(13,18)*3, np.random.randint(1,33)*3)
 	return point
 
 def gen_machines(tasks):
-	all_positions = [(int(row['x']),int(row['y'])) for _,row in tasks.iterrows()]
-	max_min_0 = (max(all_positions)[0], min(all_positions)[0])
-	max_min_1 = (max(all_positions)[1], min(all_positions)[1])
-	mx = max(max_min_0[0], max_min_1[0])
-	mn = min(max_min_0[1], max_min_1[1])
 	spd = 0.1 # fixed by now
 
 	# the first machine always attends all islands
-	pt = choose_point(all_positions, mn, mx)
+	pt = choose_point()
 	machines = [[0, 0, 1, pt[0], pt[1], spd]]
 	for i in range(1,n_machines):
 		lz = 0
 		hz = 1
-		pt = choose_point(all_positions, mn, mx)
+		pt = choose_point()
 		machines.append([i, lz, hz, pt[0], pt[1], spd])
 
 	machines = pd.DataFrame(machines, columns=['id', 'lz', 'hz', 'x', 'y', 'spd'])
@@ -105,17 +168,17 @@ def gen_machines(tasks):
 
 def gen_inst_files(group):
 	type_inst = ["lc", "lr", "lrc"]
-	for i in range(3):
+	for tp in type_inst:
 		for j in range(1,12+1):
-			inst_name = type_inst[i]+"_"+str(100+j)
+			inst_name = tp+str(100+j)
 			os.chdir(group)
 			if not os.path.isdir(inst_name):
 				os.mkdir(inst_name)
 			os.chdir(inst_name)
 
 			vehicles = gen_vehicles(5) 
-			tasks = gen_tasks(10, type_inst[i])
-			machines = gen_machines(tasks, type_inst[i])
+			tasks = gen_tasks(10, tp)
+			machines = gen_machines(tasks)
 
 			os.chdir('../../')
 
