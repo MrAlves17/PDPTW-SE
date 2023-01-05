@@ -1,6 +1,0 @@
-LRC102
-Route 1: 0 0 
-Route 2: 0 4 3 9 8 0 
-Route 3: 0 0 
-Route 4: 0 0 
-Route 5: 0 2 1 10 6 7 0 

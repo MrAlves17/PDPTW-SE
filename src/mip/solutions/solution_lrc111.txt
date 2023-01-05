@@ -1,6 +1,0 @@
-LRC111
-Route 1: 0 5 3 10 8 0 
-Route 2: 0 0 
-Route 3: 0 0 
-Route 4: 0 1 2 4 9 7 6 0 
-Route 5: 0 0 

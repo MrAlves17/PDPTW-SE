@@ -16,6 +16,8 @@ end
 
 export meloFormulation
 
+epsilon = 0.000001
+
 function meloFormulation(inst::InstanceData, params::ParameterData)
 	println("Running Formulations.meloFormulation")
 
@@ -276,7 +278,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	# ### Objective function ###
 
 	# c30
-	@objective(model, Min, sum(C))
+	@objective(model, Min, 10*sum(C) + 0.1*sum(alpha) + 0.1*sum(t))
 	println("Finished Objective function")
 	write_to_file(model,"modelo.lp")
 	println("Model file created")
@@ -389,7 +391,6 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 		push!(routes[k], i)
 		push!(timesk[k], C[k])
 	end
-	println("banana final")
 
 	sol = Solution(routes, timesk, timesh, arcsh)
 
@@ -458,19 +459,171 @@ function saveMeloFormulationSolution(inst::InstanceData, sol::Solution)
 	write(file, '\n')
 	for k in inst.K
 		write(file, "Route " * string(k) * ": ")
-		for fid in sol.routes[k]
-			write(file, string(inst.tasks[inst.refs[fid]].id) * " ")
+		rt = sol.routes[k]
+		th = sol.timesh[k]
+		ih = 0
+		for fid in 1:length(rt)
+			write(file, string(inst.tasks[inst.refs[rt[fid]]].id) * " ")
+			if fid < length(rt) && inst.tasks[inst.refs[rt[fid+1]]].z != inst.tasks[inst.refs[rt[fid]]].z
+				ih += 1
+				write(file, "M" * string(inst.machines[th[ih][1]].id) * " ")
+			end
 		end
 		write(file, '\n')
 	end
 	close(file)
 end # function saveMeloFormulationSolution()
 
-function validateSolution(inst::InstanceData, sol::Solution)
+mutable struct StateK
+	t
+	p
+	h # 0 -> !machine; 1 -> task-machine; 2 -> machine-task
+	ith
+	l
+end
 
-	for k in inst.K
-		time = 0
+mutable struct StateH
+	t
+	p
+end
+
+Base.copy(s::StateK) = StateK(s.t, s.p, s.h, s.ith, s.l)
+Base.copy(s::StateH) = StateH(s.t, s.p)
+
+function validateSolution(inst::InstanceData, sol::Solution)
+	infeasibilities = 0
+	statesK = Any[StateK(0,1,0,0,0) for k in inst.K]
+	statesH = Any[StateH(0,inst.machines[h].lz+1) for h in inst.H]
+	vehiclesDepot = 0
+	while  vehiclesDepot < length(inst.K)
+		best_stk = StateK(9999999, 1, 0, 0, 0)
+		best_sth = StateH(0,1)
+		best_k = 0
+		best_h = 0
+		waitlists_h = Any[Any[] for h in inst.H]
+
+		for k in inst.K
+			th = sol.timesh[k]
+			st = statesK[k]
+			if st.h == 1
+				h = th[st.ith][1]
+				push!(waitlists_h[h], (st.t, k))
+			end
+		end
+
+		for h in inst.H
+			sort(waitlists_h[h])
+		end
+		# println(waitlists_h)
+
+		for k in inst.K
+			rt = sol.routes[k]
+			tk = sol.timesk[k]
+			th = sol.timesh[k]
+
+			st = copy(statesK[k])
+			sth = StateH(0,1)
+			if st.p == length(rt)
+				continue
+			end
+
+			pTask = inst.tasks[inst.refs[rt[st.p]]]
+			aTask = inst.tasks[inst.refs[rt[st.p+1]]]
+			
+			if st.h == 1
+				h = th[st.ith][1]
+				sth = copy(statesH[h])
+				for (t,k1) in waitlists_h[h]
+					stk = statesK[k1]
+					if k1 != k
+						sth.t += inst.O[(inst.f[sth.p][h], inst.f[rt[stk.p]][h], h)]
+						sth.t = max(sth.t, stk.t)
+						sth.t += inst.O[(inst.f[rt[stk.p]][h], inst.f[rt[stk.p+1]][h], h)]
+						sth.p = rt[stk.p+1]
+					else 
+						sth.t += inst.O[(inst.f[sth.p][h], inst.f[rt[stk.p]][h], h)]
+						break
+					end
+				end
+				st.t = max(st.t, sth.t)
+				sth.t = st.t
+				st.t += inst.O[(inst.f[rt[st.p]][h], inst.f[rt[st.p+1]][h], h)]
+				sth.t += inst.O[(inst.f[rt[st.p]][h], inst.f[rt[st.p+1]][h], h)]
+				sth.p = rt[st.p+1]
+				st.h = 2
+			elseif st.h == 2
+				h = th[st.ith][1]
+				st.t += inst.d_bar[rt[st.p+1]][h][k]
+				st.t = max(st.t, aTask.earl)
+				# if abs(tk[st.p+1]-st.t) >= epsilon
+				# 	println("Arrived at (", tk[st.p+1], "), but should be (", st.t, ")")
+				# 	infeasibilities += 1
+				# end
+				if st.t > aTask.lat
+					println("Start of service time (", st.t, ") after the time window closed (", aTask.lat, ")")  
+					infeasibilities += 1
+				end
+				st.t += aTask.servt
+				st.l += aTask.dem
+				if st.l > inst.vehicles[k].cap
+					println("Vehicle exceeded its capacity: (", st.l, ") > (", inst.vehicles[k].cap, ")")
+					infeasibilities += 1
+				end
+				st.p += 1
+				st.h = 0
+			elseif aTask.z != pTask.z
+				st.ith += 1
+				h = th[st.ith][1]
+				st.t += inst.d_bar[rt[st.p]][h][k]
+				st.h = 1
+			else
+				st.t += inst.d[rt[st.p]][rt[st.p+1]][k]
+				st.t = max(st.t, aTask.earl)
+				# if abs(tk[st.p+1]-st.t) >= epsilon
+				# 	println("Arrived at (", tk[st.p+1], "), but should be (", st.t, ")")
+				# 	infeasibilities += 1
+				# end
+				if st.t > aTask.lat
+					println("Start of service time (", st.t, ") after the time window closed (", aTask.lat, ")")  
+					infeasibilities += 1
+				end
+				st.t += aTask.servt
+				st.l += aTask.dem
+				if st.l > inst.vehicles[k].cap
+					println("Vehicle exceeded its capacity: (", st.l, ") > (", inst.vehicles[k].cap, ")")
+					infeasibilities += 1
+				end
+				st.p += 1
+			end
+
+			if st.t < best_stk.t
+				best_stk = st
+				best_k = k
+				best_sth = sth
+				if statesK[k].h == 1 || st.ith == 0 || st.ith == 1 && statesK[k].h == 0
+					best_h = -1
+				else
+					best_h = th[st.ith][1]
+				end
+			end
+		end
+
+		statesK[best_k] = best_stk
+		if best_h != -1
+			statesH[best_h] = best_sth
+		end
+		if statesK[best_k].p == length(sol.routes[best_k])
+			vehiclesDepot+=1
+		end
+		# println(statesK)
+		# println(statesH)
 	end
+
+	# end
+	if infeasibilities > 0
+		return false
+	end
+
 	return true
 
 end # function validateSolution()

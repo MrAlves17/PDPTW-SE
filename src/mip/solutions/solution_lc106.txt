@@ -1,6 +1,0 @@
-LC106
-Route 1: 0 0 
-Route 2: 0 0 
-Route 3: 0 0 
-Route 4: 0 0 
-Route 5: 0 3 4 5 1 2 8 9 6 7 10 0 

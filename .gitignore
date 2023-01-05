@@ -38,3 +38,4 @@ visualizer/p5.js
 *modelo.lp
 
 *saida.txt
+src/mip/solutions/*.txt
