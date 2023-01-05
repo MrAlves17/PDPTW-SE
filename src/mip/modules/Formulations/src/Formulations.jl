@@ -354,10 +354,10 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 			push!(routes[k], i)
 			push!(timesk[k], t[i])
 			for j in inst.Vprime
-				if (i,j) in inst.A && x[i,j,k] > 0.5
+				if (i,j) in inst.A && abs(x[i,j,k]-1) <= epsilon
 					if (i,j) in inst.A_m
 						for h in inst.H
-							if phi[i,j,h] > 0.5
+							if abs(phi[i,j,h]-1) <= epsilon
 								push!(timesh[k], (h, alpha[i,j,h]))
 								push!(arcsh, (inst.tasks[inst.refs[i]].id,inst.tasks[inst.refs[j]].id,inst.machines[h].id))
 								break
