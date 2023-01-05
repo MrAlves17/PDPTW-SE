@@ -23,7 +23,7 @@ type = ["lc","lr","lrc"]
 for (root, dirs, files) in walkdir("../../instances/pdptw-se_1_10/")
 	for dir in dirs
 		nameInstance = "../../instances/pdptw-se_1_10/"*dir*'/'
-		args = ["testes.jl","--inst",nameInstance, "--maxtime", "30", "--cutoff", "5"]
+		args = ["testes.jl","--inst",nameInstance, "--maxtime", "60", "--cutoff", "5"]
 		params = Parameters.readInputParameters(args)
 
 		# Read instance data

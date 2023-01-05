@@ -62,7 +62,6 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 			sum1 = sum(x[j,i,k] for (j,p) in inst.A if p == i)
 			sum2 = sum(x[i,j,k] for (p,j) in inst.A if p == i)
 
-
 			@constraint(model, sum1 - sum2 == 0, base_name = "c2")
 		end
 	end
@@ -272,15 +271,20 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 			end
 		end
 	end
+
+	# c25
+	for k in inst.K
+		@constraint(model, C[k] <= inst.tasks[inst.refs[2*inst.n+2]].lat, base_name="c25")
+	end
 	println("Finished Scheduling constraints")
 
 
 	# ### Objective function ###
 
 	# c30
-	@objective(model, Min, 10*sum(C) + 0.1*sum(alpha) + 0.1*sum(t))
+	@objective(model, Min, sum(C))
 	println("Finished Objective function")
-	write_to_file(model,"modelo.lp")
+	# write_to_file(model,"modelo.lp")
 	println("Model file created")
 
 
@@ -324,7 +328,6 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	phi = value.(phi)
 	gamma = value.(gamma)
 	alpha = value.(alpha)
-
 	sol = createSolutionMelo(inst,x,z,t,C,phi,gamma,alpha)
 	printDetailMeloFormulationSolution(inst,sol)
 	saveMeloFormulationSolution(inst,sol)
@@ -341,21 +344,6 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 	timesk = Any[]
 	timesh = Any[]
 	arcsh = Any[]
-	# println(x)
-
-	# for h in inst.H
-	# 	println(h)
-	# 	for (i,j) in inst.A_m
-	# 		for (iprime,jprime) in inst.A_m
-	# 			if (i,j) != (iprime, jprime)
-	# 				println('\t',i,' ',j)
-	# 				println('\t',iprime,' ',jprime)
-	# 				println('\t',gamma[i,j,iprime,jprime,h])
-	# 				println()
-	# 			end
-	# 		end
-	# 	end
-	# end
 
 	for k in inst.K
 		push!(routes, Any[])
@@ -366,10 +354,10 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 			push!(routes[k], i)
 			push!(timesk[k], t[i])
 			for j in inst.Vprime
-				if (i,j) in inst.A && x[i,j,k] > 0
+				if (i,j) in inst.A && x[i,j,k] > 0.5
 					if (i,j) in inst.A_m
 						for h in inst.H
-							if phi[i,j,h] > 0
+							if phi[i,j,h] > 0.5
 								push!(timesh[k], (h, alpha[i,j,h]))
 								push!(arcsh, (inst.tasks[inst.refs[i]].id,inst.tasks[inst.refs[j]].id,inst.machines[h].id))
 								break
