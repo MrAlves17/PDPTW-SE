@@ -342,96 +342,96 @@ end #function meloFormulation()
 
 function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 	
-	# c12
-	println("c12,c12,c12,c12,c12,c12,c12,c12,c12,c12")
-	for k in inst.K
-		for (i,j) in inst.A
-			if j in inst.V
-				println(i," ",j, " ", k)
-				println(t[j], " >= ", t[i], " + ", inst.s[i], " + ", inst.d[i][j][k], " - M(1-",x[i,j,k], ")")
-				println()
-				# @constraint(model, t[j] >= t[i] + inst.s[i] + inst.d[i][j][k] - M*(1-x[i,j,k]), base_name = "c12")
-			end
-		end
-	end
+	# # c12
+	# println("c12,c12,c12,c12,c12,c12,c12,c12,c12,c12")
+	# for k in inst.K
+	# 	for (i,j) in inst.A
+	# 		if j in inst.V
+	# 			println(i," ",j, " ", k)
+	# 			println(t[j], " >= ", t[i], " + ", inst.s[i], " + ", inst.d[i][j][k], " - M(1-",x[i,j,k], ")")
+	# 			println()
+	# 			# @constraint(model, t[j] >= t[i] + inst.s[i] + inst.d[i][j][k] - M*(1-x[i,j,k]), base_name = "c12")
+	# 		end
+	# 	end
+	# end
 
-	# c13
-	println("c13,c13,c13,c13,c13,c13,c13,c13,c13,c13")
-	for i in inst.V_p
-		println(i)
-		println(t[i], " + ", inst.s[i], " <= ", t[inst.n+i])
-		println()
-		# @constraint(model, t[i] + inst.s[i] <= t[inst.n+i], base_name="c13")
-	end
+	# # c13
+	# println("c13,c13,c13,c13,c13,c13,c13,c13,c13,c13")
+	# for i in inst.V_p
+	# 	println(i)
+	# 	println(t[i], " + ", inst.s[i], " <= ", t[inst.n+i])
+	# 	println()
+	# 	# @constraint(model, t[i] + inst.s[i] <= t[inst.n+i], base_name="c13")
+	# end
 
-	# c14
-	println("c14,c14,c14,c14,c14,c14,c14,c14,c14,c14")
-	for i in inst.V[2:length(inst.V)]
-		println(i)
-		println(inst.tasks[inst.refs[i]].earl," <= ", t[i], " <= ", inst.tasks[inst.refs[i]].lat)
-		println()
-		# @constraint(model, inst.tasks[inst.refs[i]].earl <= t[i] <= inst.tasks[inst.refs[i]].lat, base_name = "c14")
-	end
+	# # c14
+	# println("c14,c14,c14,c14,c14,c14,c14,c14,c14,c14")
+	# for i in inst.V[2:length(inst.V)]
+	# 	println(i)
+	# 	println(inst.tasks[inst.refs[i]].earl," <= ", t[i], " <= ", inst.tasks[inst.refs[i]].lat)
+	# 	println()
+	# 	# @constraint(model, inst.tasks[inst.refs[i]].earl <= t[i] <= inst.tasks[inst.refs[i]].lat, base_name = "c14")
+	# end
 
-	# # c15
-	# fix(t[1], 0; force = true)
+	# # # c15
+	# # fix(t[1], 0; force = true)
 
-	# c16
-	for (i,j) in inst.A_m
-		sum1 = 0
-		for h in inst.H
-			sum1 += phi[i,j,h]
-		end
+	# # c16
+	# for (i,j) in inst.A_m
+	# 	sum1 = 0
+	# 	for h in inst.H
+	# 		sum1 += phi[i,j,h]
+	# 	end
 
-		sum2 = 0
-		for k in inst.K
-			sum2 += x[i,j,k]
-		end
+	# 	sum2 = 0
+	# 	for k in inst.K
+	# 		sum2 += x[i,j,k]
+	# 	end
 
-		println(sum1, "==", sum2)
-		println()
-		# @constraint(model, sum1 == sum2, base_name = "c16")
-	end
+	# 	println(sum1, "==", sum2)
+	# 	println()
+	# 	# @constraint(model, sum1 == sum2, base_name = "c16")
+	# end
 
-	# c17
-	for h in inst.H
-		for k in inst.K
-			for (i,j) in inst.A_m
-				println(h," ", k, " ", (i,j))
-				println(alpha[i,j,h], " >= ", t[i], " + ", inst.s[i], " + ", inst.d_bar[i][h][k], " - M(1-", phi[i,j,h], ")")
-				println()
-				# @constraint(model, alpha[i,j,h] >= t[i] + inst.s[i] + inst.d_bar[i][h][k] - M*(1-phi[i,j,h]), base_name = "c17")
-			end
-		end
-	end
+	# # c17
+	# for h in inst.H
+	# 	for k in inst.K
+	# 		for (i,j) in inst.A_m
+	# 			println(h," ", k, " ", (i,j))
+	# 			println(alpha[i,j,h], " >= ", t[i], " + ", inst.s[i], " + ", inst.d_bar[i][h][k], " - M(1-", phi[i,j,h], ")")
+	# 			println()
+	# 			# @constraint(model, alpha[i,j,h] >= t[i] + inst.s[i] + inst.d_bar[i][h][k] - M*(1-phi[i,j,h]), base_name = "c17")
+	# 		end
+	# 	end
+	# end
 
-	# c18
-	for h in inst.H
-		for k in inst.K
-			for (i,j) in inst.A_m
-				if j in inst.V
-					println(h, " ", k, " ", (i,j))
-					println(t[j], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.d_bar[j][h][k], " - M(2-,", phi[i,j,h], "-", x[i,j,k])
-					println()
-					# @constraint(model, t[j] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.d_bar[j][h][k] - M*(2-phi[i,j,h]-x[i,j,k]), base_name = "c18")
-				end
-			end
-		end
-	end
+	# # c18
+	# for h in inst.H
+	# 	for k in inst.K
+	# 		for (i,j) in inst.A_m
+	# 			if j in inst.V
+	# 				println(h, " ", k, " ", (i,j))
+	# 				println(t[j], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.d_bar[j][h][k], " - M(2-,", phi[i,j,h], "-", x[i,j,k])
+	# 				println()
+	# 				# @constraint(model, t[j] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.d_bar[j][h][k] - M*(2-phi[i,j,h]-x[i,j,k]), base_name = "c18")
+	# 			end
+	# 		end
+	# 	end
+	# end
 
-	# c22
-	for h in inst.H
-		for (i,j) in inst.A_m
-			for (iprime, jprime) in inst.A_m
-				if (i,j) != (iprime, jprime)
-					println(h, " ", (i,j), " ", (iprime, jprime))
-					println(alpha[iprime,jprime,h], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.O[(inst.f[j][h], inst.f[iprime][h], h)], " - M(1 - ", gamma[i,j,iprime,jprime,h], ")")
-					println()
-					# @constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.O[(inst.f[j][h], inst.f[iprime][h], h)] - M*(1 - gamma[i,j,iprime,jprime,h]), base_name = "c22")
-				end
-			end
-		end
-	end
+	# # c22
+	# for h in inst.H
+	# 	for (i,j) in inst.A_m
+	# 		for (iprime, jprime) in inst.A_m
+	# 			if (i,j) != (iprime, jprime)
+	# 				println(h, " ", (i,j), " ", (iprime, jprime))
+	# 				println(alpha[iprime,jprime,h], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.O[(inst.f[j][h], inst.f[iprime][h], h)], " - M(1 - ", gamma[i,j,iprime,jprime,h], ")")
+	# 				println()
+	# 				# @constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.O[(inst.f[j][h], inst.f[iprime][h], h)] - M*(1 - gamma[i,j,iprime,jprime,h]), base_name = "c22")
+	# 			end
+	# 		end
+	# 	end
+	# end
 
 	routes = Any[]
 	timesk = Any[]
