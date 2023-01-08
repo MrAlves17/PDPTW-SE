@@ -31,7 +31,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 
 	### Defining variables ###
 
-	M = 999999
+	M = 2*inst.tasks[1].lat+1
 
 	# Routing variables
 
@@ -285,7 +285,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 	@objective(model, Min, sum(C))
 	println("Finished Objective function")
 	# write_to_file(model,"modelo.lp")
-	println("Model file created")
+	# println("Model file created")
 
 
 	t1 = time_ns()
@@ -317,7 +317,7 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 
 
 	open("saida.txt","a") do f
-		write(f,";bestsol=$(bestsol);time=$(time)\n")
+		write(f,";bestsol=$(bestsol);time=$(time);gap=$(gap)\n")
 		# write(f,";$(x);$(value.(x));$(y);$(value.(y));$(p);$(value.(p));$(value.(u));\n")
 	end
 
@@ -334,12 +334,105 @@ function meloFormulation(inst::InstanceData, params::ParameterData)
 
 	if validateSolution(inst, sol)
 		println("Everything is awesome!")
+	else
+		println("Infeasible solution")
 	end
 
 end #function meloFormulation()
 
 function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 	
+	# c12
+	println("c12,c12,c12,c12,c12,c12,c12,c12,c12,c12")
+	for k in inst.K
+		for (i,j) in inst.A
+			if j in inst.V
+				println(i," ",j, " ", k)
+				println(t[j], " >= ", t[i], " + ", inst.s[i], " + ", inst.d[i][j][k], " - M(1-",x[i,j,k], ")")
+				println()
+				# @constraint(model, t[j] >= t[i] + inst.s[i] + inst.d[i][j][k] - M*(1-x[i,j,k]), base_name = "c12")
+			end
+		end
+	end
+
+	# c13
+	println("c13,c13,c13,c13,c13,c13,c13,c13,c13,c13")
+	for i in inst.V_p
+		println(i)
+		println(t[i], " + ", inst.s[i], " <= ", t[inst.n+i])
+		println()
+		# @constraint(model, t[i] + inst.s[i] <= t[inst.n+i], base_name="c13")
+	end
+
+	# c14
+	println("c14,c14,c14,c14,c14,c14,c14,c14,c14,c14")
+	for i in inst.V[2:length(inst.V)]
+		println(i)
+		println(inst.tasks[inst.refs[i]].earl," <= ", t[i], " <= ", inst.tasks[inst.refs[i]].lat)
+		println()
+		# @constraint(model, inst.tasks[inst.refs[i]].earl <= t[i] <= inst.tasks[inst.refs[i]].lat, base_name = "c14")
+	end
+
+	# # c15
+	# fix(t[1], 0; force = true)
+
+	# c16
+	for (i,j) in inst.A_m
+		sum1 = 0
+		for h in inst.H
+			sum1 += phi[i,j,h]
+		end
+
+		sum2 = 0
+		for k in inst.K
+			sum2 += x[i,j,k]
+		end
+
+		println(sum1, "==", sum2)
+		println()
+		# @constraint(model, sum1 == sum2, base_name = "c16")
+	end
+
+	# c17
+	for h in inst.H
+		for k in inst.K
+			for (i,j) in inst.A_m
+				println(h," ", k, " ", (i,j))
+				println(alpha[i,j,h], " >= ", t[i], " + ", inst.s[i], " + ", inst.d_bar[i][h][k], " - M(1-", phi[i,j,h], ")")
+				println()
+				# @constraint(model, alpha[i,j,h] >= t[i] + inst.s[i] + inst.d_bar[i][h][k] - M*(1-phi[i,j,h]), base_name = "c17")
+			end
+		end
+	end
+
+	# c18
+	for h in inst.H
+		for k in inst.K
+			for (i,j) in inst.A_m
+				if j in inst.V
+					println(h, " ", k, " ", (i,j))
+					println(t[j], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.d_bar[j][h][k], " - M(2-,", phi[i,j,h], "-", x[i,j,k])
+					println()
+					# @constraint(model, t[j] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.d_bar[j][h][k] - M*(2-phi[i,j,h]-x[i,j,k]), base_name = "c18")
+				end
+			end
+		end
+	end
+
+	# c22
+	for h in inst.H
+		for (i,j) in inst.A_m
+			for (iprime, jprime) in inst.A_m
+				if (i,j) != (iprime, jprime)
+					println(h, " ", (i,j), " ", (iprime, jprime))
+					println(alpha[iprime,jprime,h], " >= ", alpha[i,j,h], " + ", inst.O[(inst.f[i][h], inst.f[j][h], h)], " + ", inst.O[(inst.f[j][h], inst.f[iprime][h], h)], " - M(1 - ", gamma[i,j,iprime,jprime,h], ")")
+					println()
+					# @constraint(model, alpha[iprime,jprime,h] >= alpha[i,j,h] + inst.O[(inst.f[i][h], inst.f[j][h], h)] + inst.O[(inst.f[j][h], inst.f[iprime][h], h)] - M*(1 - gamma[i,j,iprime,jprime,h]), base_name = "c22")
+				end
+			end
+		end
+	end
+
 	routes = Any[]
 	timesk = Any[]
 	timesh = Any[]
@@ -354,10 +447,10 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 			push!(routes[k], i)
 			push!(timesk[k], t[i])
 			for j in inst.Vprime
-				if (i,j) in inst.A && abs(x[i,j,k]-1) <= epsilon
+				if (i,j) in inst.A && abs(x[i,j,k]-1) <= 0.1
 					if (i,j) in inst.A_m
 						for h in inst.H
-							if abs(phi[i,j,h]-1) <= epsilon
+							if abs(phi[i,j,h]-1) <= 0.1
 								push!(timesh[k], (h, alpha[i,j,h]))
 								push!(arcsh, (inst.tasks[inst.refs[i]].id,inst.tasks[inst.refs[j]].id,inst.machines[h].id))
 								break
@@ -370,12 +463,6 @@ function createSolutionMelo(inst::InstanceData, x, z, t, C, phi, gamma, alpha)
 			end
 		end
 
-
-		# for (i,j) in inst.A_m
-		# 	for (iprime,jprime) in inst.A_m
-		# 		for h in inst.H
-		# 			if phi[i,j,h] > 0 && phi[iprime,jprime,h] > 0
-		# 				push!()
 		push!(routes[k], i)
 		push!(timesk[k], C[k])
 	end
@@ -480,6 +567,46 @@ Base.copy(s::StateH) = StateH(s.t, s.p)
 
 function validateSolution(inst::InstanceData, sol::Solution)
 	infeasibilities = 0
+	tasks_visited = [Any[false, 0] for i in inst.Vprime]
+	for k in inst.K
+		rt = sol.routes[k]
+		if rt[1] != 1
+			println("Route doesn't start at depot")
+			return false
+		end
+		tasks_visited[rt[1]] = Any[true, k]
+		if rt[length(rt)] != length(inst.Vprime)
+			println("Route doesn't end at depot (", rt[length(rt)], ") (", length(inst.Vprime))
+			return false
+		end
+		tasks_visited[rt[length(rt)]] = Any[true, k]
+
+		for i in 2:length(rt)-1
+			if tasks_visited[rt[i]][1]
+				println("Task was already done by vehicle ", tasks_visited[rt[i]][2])
+				return false
+			end
+			if rt[i] > inst.n+1 # if delivery
+				if tasks_visited[rt[i]-inst.n][2] == k && !tasks_visited[rt[i]-inst.n][1]
+					println("Delivery task ", inst.tasks[inst.refs[rt[i]]].id, " was done before pickup", inst.tasks[inst.refs[rt[i]-inst.n]].id)
+					return false
+				end
+				if rt[i] > inst.n+1 && tasks_visited[rt[i]-inst.n][2] != k && tasks_visited[rt[i]-inst.n][1]
+					println("Pickup task ", inst.tasks[inst.refs[rt[i]-inst.n]].id, " was done by another vehicle (pv=",tasks_visited[rt[i]-inst.n][2], ") != (dv=", k, ")")
+					return false
+				end
+			end
+			tasks_visited[rt[i]] = Any[true, k]
+		end
+	end
+
+	for i in inst.Vprime
+		if !tasks_visited[i][1]
+			println("Task ", inst.tasks[inst.refs[i]].id, " was not done")
+			return false
+		end
+	end
+
 	statesK = Any[StateK(0,1,0,0,0) for k in inst.K]
 	statesH = Any[StateH(0,inst.machines[h].lz+1) for h in inst.H]
 	vehiclesDepot = 0
@@ -545,17 +672,17 @@ function validateSolution(inst::InstanceData, sol::Solution)
 				st.t = max(st.t, aTask.earl)
 				# if abs(tk[st.p+1]-st.t) >= epsilon
 				# 	println("Arrived at (", tk[st.p+1], "), but should be (", st.t, ")")
-				# 	infeasibilities += 1
+				# 	return false
 				# end
 				if st.t > aTask.lat
 					println("Start of service time (", st.t, ") after the time window closed (", aTask.lat, ")")  
-					infeasibilities += 1
+					return false
 				end
 				st.t += aTask.servt
 				st.l += aTask.dem
 				if st.l > inst.vehicles[k].cap
 					println("Vehicle exceeded its capacity: (", st.l, ") > (", inst.vehicles[k].cap, ")")
-					infeasibilities += 1
+					return false
 				end
 				st.p += 1
 				st.h = 0
@@ -569,17 +696,21 @@ function validateSolution(inst::InstanceData, sol::Solution)
 				st.t = max(st.t, aTask.earl)
 				# if abs(tk[st.p+1]-st.t) >= epsilon
 				# 	println("Arrived at (", tk[st.p+1], "), but should be (", st.t, ")")
-				# 	infeasibilities += 1
+				# 	return false
 				# end
 				if st.t > aTask.lat
 					println("Start of service time (", st.t, ") after the time window closed (", aTask.lat, ")")  
-					infeasibilities += 1
+					return false
 				end
 				st.t += aTask.servt
 				st.l += aTask.dem
 				if st.l > inst.vehicles[k].cap
 					println("Vehicle exceeded its capacity: (", st.l, ") > (", inst.vehicles[k].cap, ")")
-					infeasibilities += 1
+					return false
+				end
+				if st.l < 0
+					println("Vehicle ", k, " doesn't have the package to delivery")
+					return false
 				end
 				st.p += 1
 			end

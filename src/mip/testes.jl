@@ -20,10 +20,10 @@ import Formulations
 # Read the parameters from command line
 
 type = ["lc","lr","lrc"]
-for (root, dirs, files) in walkdir("../../instances/pdptw-se_1_10/")
+for (root, dirs, files) in walkdir("../../instances/pdptw-se_1_16/")
 	for dir in dirs
-		nameInstance = "../../instances/pdptw-se_1_10/"*dir*'/'
-		args = ["testes.jl","--inst",nameInstance, "--maxtime", "60", "--cutoff", "5"]
+		nameInstance = "../../instances/pdptw-se_1_16/"*dir*'/'
+		args = ["testes.jl","--inst",nameInstance, "--maxtime", "1800", "--cutoff", "8"]
 		params = Parameters.readInputParameters(args)
 
 		# Read instance data

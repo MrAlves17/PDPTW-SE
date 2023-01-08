@@ -184,14 +184,15 @@ def gen_inst_files(group):
 			os.chdir(inst_name)
 
 			vehicles = gen_vehicles(5) 
-			tasks = gen_tasks(10, tp)
+			tasks = gen_tasks(n_tasks, tp)
 			machines = gen_machines(tasks)
 
 			os.chdir('../../')
 
 np.random.seed(0)
+n_tasks = 16
 n_machines = 3
-new_group = 'pdptw-se_1_10'
+new_group = 'pdptw-se_1_'+str(n_tasks)
 if not os.path.isdir(new_group):
 	os.mkdir(new_group)
 
